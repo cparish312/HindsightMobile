@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,72 +55,47 @@ fun ConversationScreen(navController: NavController, viewModel: ConversationView
     val models by viewModel.models.observeAsState(emptyList())
 
     HindsightMobileTheme {
-
         val scrollState = rememberLazyListState()
         val topBarState = rememberTopAppBarState()
         val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState)
         val scope = rememberCoroutineScope()
-
-        val colorScheme = MaterialTheme.colorScheme
         var modelReport by remember { mutableStateOf<String?>(null) }
+        val colorScheme = MaterialTheme.colorScheme
 
         Scaffold(
             topBar = {
                 ConversationBar(
                     modelInfo = modelInfo,
-                    onSettingsIconPressed = {
-                        navController.navigate("mainSettings")
-                    },
+                    onSettingsIconPressed = { navController.navigate("mainSettings") },
                     scrollBehavior = scrollBehavior,
-                    onSelectModelPressed = {
-                        viewModel.loadModelList()
-                    },
-                    onUnloadModelPressed = {
-                        viewModel.unloadModel()
-                    }
+                    onSelectModelPressed = { viewModel.loadModelList() },
+                    onUnloadModelPressed = { viewModel.unloadModel() }
                 )
                 if (models.isNotEmpty()) {
                     SelectModelDialog(
                         models = models,
-                        onDownloadModel = { model ->
-                            viewModel.downloadModel(model)
-                        },
-                        onLoadModel = { model ->
-                            viewModel.loadModel(model)
-                        },
-                        onDismissRequest = {
-                            viewModel.resetModelList()
-                        }
+                        onDownloadModel = { model -> viewModel.downloadModel(model) },
+                        onLoadModel = { model -> viewModel.loadModel(model) },
+                        onDismissRequest = { viewModel.resetModelList() }
                     )
-                }
-                else if (modelReport != null) {
+                } else if (modelReport != null) {
                     AlertDialog(
-                        onDismissRequest = {
-                            modelReport = null
-                        },
-                        title = {
-                            Text(text = "Timings")
-                        },
-                        text = {
-                            Text(
-                                text = modelReport!!,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        },
+                        onDismissRequest = { modelReport = null },
+                        title = { Text(text = "Timings") },
+                        text = { Text(text = modelReport!!, style = MaterialTheme.typography.bodyMedium) },
                         confirmButton = {
-                            TextButton(onClick = { modelReport = null }) {
-                                Text(text = "CLOSE")
-                            }
+                            TextButton(onClick = { modelReport = null }) { Text(text = "CLOSE") }
                         }
                     )
                 }
             },
-            // Exclude ime and navigation bar padding so this can be added by the UserInput composable
             contentWindowInsets = ScaffoldDefaults
                 .contentWindowInsets
                 .exclude(WindowInsets.navigationBars)
                 .exclude(WindowInsets.ime),
-            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+            modifier = Modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .systemBarsPadding() // Equivalent to consumeWindowInsets = false at the root level
         ) { paddingValues ->
             Column(
                 Modifier
@@ -129,15 +105,16 @@ fun ConversationScreen(navController: NavController, viewModel: ConversationView
                         val strokeWidth = 2.dp.toPx()
                         val x = size.width * progress
                         drawLine(
-                            colorScheme.primary,
+                            color = colorScheme.primary,
                             start = Offset(0f, 0f),
                             end = Offset(x, 0f),
                             strokeWidth = strokeWidth
                         )
-                    }) {
+                    }
+            ) {
                 Messages(
                     messages = messages,
-                    navigateToProfile = { },
+                    navigateToProfile = {},
                     showAssistantPrompt = { message ->
                         navController.navigateToAssistantPrompt(message)
                     },
@@ -146,27 +123,18 @@ fun ConversationScreen(navController: NavController, viewModel: ConversationView
                 )
                 UserInput(
                     modifier = Modifier
-                        .navigationBarsPadding()
-                        .imePadding(),
-                    status = if (modelInfo == null)
-                        UserInputStatus.NOT_LOADED
-                    else if (isGenerating == true)
-                        UserInputStatus.GENERATING
-                    else
-                        UserInputStatus.IDLE,
-                    onMessageSent = { content ->
-                        viewModel.addMessage(
-                            Message("User", content)
-                        )
+                        .navigationBarsPadding() // Ensures padding for navigation bars
+                        .imePadding(),            // Adjusts layout when keyboard is shown
+                    status = when {
+                        modelInfo == null -> UserInputStatus.NOT_LOADED
+                        isGenerating == true -> UserInputStatus.GENERATING
+                        else -> UserInputStatus.IDLE
                     },
-                    onCancelClicked = {
-                        viewModel.cancelGeneration()
-                    },
-                    // let this element handle the padding so that the elevation is shown behind the
-                    // navigation bar
+                    onMessageSent = { content -> viewModel.addMessage(Message("User", content)) },
+                    onCancelClicked = { viewModel.cancelGeneration() },
                     resetScroll = {
                         scope.launch {
-                            scrollState.animateScrollToItem(scrollState.layoutInfo.totalItemsCount- 1)
+                            scrollState.animateScrollToItem(scrollState.layoutInfo.totalItemsCount - 1)
                         }
                     }
                 )

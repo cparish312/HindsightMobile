@@ -22,7 +22,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.HindsightMobile"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        tools:ignore="ExtraText">
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
@@ -66,6 +67,16 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+<!--        <activity android:name=".ui.screens.ConversationActivity"-->
+<!--            android:exported="true">-->
+<!--            &lt;!&ndash; Optional intent-filter if this is a primary entry point &ndash;&gt;-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.VIEW" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
     </application>
+
 
 </manifest>

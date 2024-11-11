@@ -124,6 +124,10 @@ dependencies {
     implementation(libs.koin.annotations)
     implementation(libs.koin.androidx.compose)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.ui.viewbinding)
+    implementation(libs.androidx.coordinatorlayout)
+    implementation(libs.material)
     ksp(libs.koin.ksp.compiler)
 
     testImplementation(libs.junit)

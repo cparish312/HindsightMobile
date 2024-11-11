@@ -141,9 +141,9 @@ fun ChannelBarPreview() {
 fun ChannelBarWithModelInfoPreview() {
     HindsightMobileTheme {
         ConversationBar(modelInfo =
-            ModelInfo(
-                name = "Model Name Model Name Model Name Model Name Model Name",
-                description = "Model Description"
+        ModelInfo(
+            name = "Model Name Model Name Model Name Model Name Model Name",
+            description = "Model Description"
             )
         )
     }

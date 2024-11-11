@@ -1,5 +1,6 @@
 package com.connor.hindsightmobile.ui.screens
 
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -11,6 +12,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import android.util.Base64
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 
 const val ASSISTANT_PROMPT_SCREEN = "assistantPromptScreen/{message}"
 
@@ -28,6 +31,17 @@ fun AppNavigation() {
         composable("mainSettings") {
             SettingsScreen(navController)
         }
+
+//        composable("mainChat") {
+//            Button(onClick = {
+//                // Use an Intent to start ConversationActivity
+//                val intent = Intent(context, ConversationActivity::class.java)
+//                context.startActivity(intent)
+//            }) {
+//                Text("Open Chat")
+//            }
+//        }
+
         composable("chat") {
             ConversationScreen(navController)
         }

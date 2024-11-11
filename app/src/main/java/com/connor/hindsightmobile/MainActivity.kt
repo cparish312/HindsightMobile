@@ -17,8 +17,12 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.viewinterop.AndroidViewBinding
 import androidx.core.content.ContextCompat
 import com.connor.hindsightmobile.models.RecorderModel
 import com.connor.hindsightmobile.obj.IngestAlarmReceiver
@@ -29,8 +33,9 @@ import com.connor.hindsightmobile.ui.screens.AppNavigation
 import com.connor.hindsightmobile.ui.theme.HindsightMobileTheme
 import com.connor.hindsightmobile.utils.Preferences
 import java.util.Calendar
+import com.connor.hindsightmobile.databinding.ContentMainBinding
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private lateinit var mediaProjectionManager: MediaProjectionManager
     private lateinit var screenCaptureLauncher: ActivityResultLauncher<Intent>
     private val recorderModel: RecorderModel by viewModels()
@@ -38,11 +43,19 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            HindsightMobileTheme {
-                AppNavigation()
+//        setContent {
+//            HindsightMobileTheme {
+//                AppNavigation()
+//            }
+//        }
+        setContentView(
+            ComposeView(this).apply {
+                consumeWindowInsets = false
+                setContent {
+                    AndroidViewBinding(ContentMainBinding::inflate)
+                }
             }
-        }
+        )
 
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE)
                 as MediaProjectionManager
