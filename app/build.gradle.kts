@@ -115,6 +115,7 @@ dependencies {
 
     implementation("com.github.jeziellago:compose-markdown:0.3.4")
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.compose.foundation)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
