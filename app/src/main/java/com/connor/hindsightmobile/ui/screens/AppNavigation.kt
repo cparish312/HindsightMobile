@@ -29,7 +29,8 @@ fun AppNavigation() {
             SettingsScreen(navController)
         }
         composable("chat") {
-            ConversationScreen(navController)
+            // ConversationScreen(navController)
+            ChatScreen(navController)
         }
         composable("manageRecordings"){
             ManageRecordingsScreen(navController)

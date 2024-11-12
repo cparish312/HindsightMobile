@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
     id("io.objectbox")
-    id("com.google.devtools.ksp")
 }
 
 android {
@@ -91,9 +90,6 @@ android {
     }
 }
 
-ksp {
-    arg("KOIN_CONFIG_CHECK","true")
-}
 
 dependencies {
 
@@ -118,13 +114,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.1")
 
     implementation("com.github.jeziellago:compose-markdown:0.3.4")
-
-    implementation(libs.koin.core)
-    implementation(libs.koin.android)
-    implementation(libs.koin.annotations)
-    implementation(libs.koin.androidx.compose)
     implementation(libs.androidx.runtime.livedata)
-    ksp(libs.koin.ksp.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
