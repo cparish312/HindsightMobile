@@ -31,25 +31,50 @@ class ContextRetriever(context : Context){
             }
 
             // Map scores to frames and sort by timestamp in descending order (most recent first)
-            val sortedResults = allQueryResults
+            val results = allQueryResults
                 .map { Pair(it.score.toFloat(), it.get()) }
-                .sortedByDescending { it.second.timestamp }
+
+            val qualityFilteredResults = results.filter { (_, frame) ->
+                frame.frameText.toString().length >= 20 &&
+                        !frame.frameText.toString().matches(Regex("^[\\s\\d.,:]*$"))
+                }.sortedByDescending { it.second.timestamp }
 
             // Filter to keep only the first (most recent) frame in each n_seconds time group
             val filteredResults = mutableListOf<Pair<Float, ObjectBoxFrame>>()
             var lastTimestamp: Long? = null
 
-            for ((score, frame) in sortedResults) {
+            for ((score, frame) in qualityFilteredResults) {
                 if (lastTimestamp == null || lastTimestamp!! - frame.timestamp > nSeconds * 1000) {
                     filteredResults.add(Pair(score, frame))
                     lastTimestamp = frame.timestamp
                 }
             }
 
+            val timeDecayedResults = mutableListOf<Pair<Float, ObjectBoxFrame>>()
+            for ((score, frame) in filteredResults) {
+                val timeAgoInHours = (System.currentTimeMillis() - frame.timestamp) / (1000.0 * 60 * 60)
+                val timeDecayFactor = 1.0 / (1 + 0.01 * timeAgoInHours)
+                val combinedDistance = score * (1 - timeDecayFactor)
+                timeDecayedResults.add(Pair(combinedDistance.toFloat(), frame))
+            }
+
             // Sort by score in descending order and take the top n (Note score is actually distance so we want smal)
-            val topResultsByScore = filteredResults
+            val topResultsByScore = timeDecayedResults
                 .sortedBy { it.first }
                 .take(nContexts)
+
+//            // Get surrounding context from nearby timestamps
+//            private suspend fun getContextWindow(frame: ObjectBoxFrame, windowSeconds: Int = 30): String {
+//                val surroundingFrames = framesBox
+//                    .query(ObjectBoxFrame_.timestamp
+//                        .between(frame.timestamp - windowSeconds * 1000,
+//                                frame.timestamp + windowSeconds * 1000))
+//                    .build()
+//                    .find()
+//                return surroundingFrames
+//                    .sortedBy { it.timestamp }
+//                    .joinToString("\n") { it.frameText.toString() }
+//            }
 
             // Sort the top n results by timestamp in ascending order
             val finalResults = topResultsByScore.sortedBy { it.second.timestamp }
