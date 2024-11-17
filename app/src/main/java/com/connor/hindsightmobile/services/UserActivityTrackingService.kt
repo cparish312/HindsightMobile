@@ -16,7 +16,8 @@ class UserActivityTrackingService : AccessibilityService() {
         "com.android.systemui",
         "com.android.launcher",
         "com.google.android.inputmethod.latin", // Trade off of knowing the keyboard is in use and ease of organizing with app being used
-        "com.google.android.apps.nexuslauncher"
+        "com.google.android.apps.nexuslauncher",
+        "com.android.pixeldisplayservice"
     )
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {

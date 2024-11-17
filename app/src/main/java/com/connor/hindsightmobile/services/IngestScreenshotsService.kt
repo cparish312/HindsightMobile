@@ -31,7 +31,7 @@ import com.connor.hindsightmobile.utils.getImageFiles
 import com.connor.hindsightmobile.utils.getUnprocessedScreenshotsDirectory
 import com.connor.hindsightmobile.utils.getVideoFilesDirectory
 import com.connor.hindsightmobile.utils.parseScreenshotFilePath
-import com.connor.hindsightmobile.utils.processOCRResults
+import com.connor.hindsightmobile.utils.processOCRResultsIngest
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
@@ -236,7 +236,7 @@ class IngestScreenshotsService : LifecycleService() {
             val ocrResults = frame["ocr_results"] as List<Map<String, Any?>>
             val application = frame["application"] as String
 
-            val combinedOCR = processOCRResults(ocrResults)
+            val combinedOCR = processOCRResultsIngest(ocrResults, application)
 
             embedScreenshot(frameId, timestamp, application, combinedOCR, sentenceEncoder)
             delay(100)

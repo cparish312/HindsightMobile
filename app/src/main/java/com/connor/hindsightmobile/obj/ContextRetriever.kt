@@ -1,8 +1,11 @@
 package com.connor.hindsightmobile.obj
 
 import android.content.Context
+import android.util.Log
+import com.connor.hindsightmobile.DB
 import com.connor.hindsightmobile.embeddings.SentenceEmbeddingProvider
 import com.connor.hindsightmobile.utils.convertToLocalTime
+import com.connor.hindsightmobile.utils.processOCRResultsRetrieveContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -12,6 +15,7 @@ import kotlin.coroutines.suspendCoroutine
 class ContextRetriever(context : Context){
     private val framesBox = ObjectBoxStore.store.boxFor(ObjectBoxFrame::class.java)
     private val sentenceEncoder = SentenceEmbeddingProvider(context)
+    private val dbHelper: DB = DB.getInstance(context)
 
     suspend fun getContext(query: String, nContexts: Int = 3, nSeconds: Int = 120): QueryResults = suspendCoroutine { continuation ->
         CoroutineScope(Dispatchers.IO).launch {
@@ -21,6 +25,7 @@ class ContextRetriever(context : Context){
                     .and(ObjectBoxFrame_.application.notEqual("com.connor.hindsightmobile"))
                     .and(ObjectBoxFrame_.application.notEqual("com.google.android.inputmethod.latin"))
                     .and(ObjectBoxFrame_.application.notEqual("com.google.android.apps.nexuslauncher"))
+                    .and(ObjectBoxFrame_.application.notEqual("com.android.pixeldisplayservice"))
                 )
                 .build()
                 .findWithScores()
@@ -53,7 +58,8 @@ class ContextRetriever(context : Context){
             val timeDecayedResults = mutableListOf<Pair<Float, ObjectBoxFrame>>()
             for ((score, frame) in filteredResults) {
                 val timeAgoInHours = (System.currentTimeMillis() - frame.timestamp) / (1000.0 * 60 * 60)
-                val timeDecayFactor = 1.0 / (1 + 0.01 * timeAgoInHours)
+                val timeDecayFactor = 1.0 / (1 + 0.001 * timeAgoInHours)
+                Log.d("ContextRetriever", "Time decay factor for ${frame.frameId}: $timeAgoInHours ${(1 - timeDecayFactor)}")
                 val combinedDistance = score * (1 - timeDecayFactor)
                 timeDecayedResults.add(Pair(combinedDistance.toFloat(), frame))
             }
@@ -78,14 +84,25 @@ class ContextRetriever(context : Context){
 
             // Sort the top n results by timestamp in ascending order
             val finalResults = topResultsByScore.sortedBy { it.second.timestamp }
+            val contextFrameIds = finalResults.map { it.second.frameId }
+            val framesWithOCR = dbHelper.getFramesWithOCRResults(contextFrameIds)
 
             val retrievedContextList = ArrayList<RetrievedContext>()
             var contextString = ""
-            finalResults.forEach { (score, frame) ->
-                retrievedContextList.add(RetrievedContext(frame.frameId, frame.frameText.toString()))
-                val localTime = convertToLocalTime(frame.timestamp)
-                contextString += "Text from Screenshot of ${frame.application} at ${localTime}\n"
-                contextString += frame.frameText.toString() + "\n\n"
+            for (frame in framesWithOCR) {
+                val frameId = frame["frame_id"] as Int
+                val timestamp = frame["timestamp"] as Long
+                val ocrResults = frame["ocr_results"] as List<Map<String, Any?>>
+                val application = frame["application"] as String
+
+                // Process the OCR results to get the formatted text
+                val processedText = processOCRResultsRetrieveContext(ocrResults, application, timestamp)
+
+                // Add the processed text to the retrieved context list
+                retrievedContextList.add(RetrievedContext(frameId, processedText))
+
+                // Append the processed text to the context string
+                contextString += processedText + "\n\n"
             }
 
             continuation.resume(QueryResults(contextString, retrievedContextList))

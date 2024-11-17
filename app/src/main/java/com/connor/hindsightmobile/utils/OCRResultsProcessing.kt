@@ -18,7 +18,7 @@ private fun isNonMeaningfulText(text: String): Boolean {
 }
 
 
-fun processOCRResults(ocrResults: List<Map<String, Any?>>): String {
+fun processOCRResultsIngest(ocrResults: List<Map<String, Any?>>, appPackageName: String): String {
     // Filter out non-meaningful text
     val meaningfulTexts = ocrResults.filter { ocrResult ->
         val text = (ocrResult["text"] as? String)?.trim() ?: ""
@@ -40,6 +40,60 @@ fun processOCRResults(ocrResults: List<Map<String, Any?>>): String {
         sortedBlockTexts.joinToString(separator = " ") { it["text"] as String }
     }
 
-    // Combine paragraphs into a single string
-    return paragraphs.joinToString(separator = "\n\n")
+    val ocrText = paragraphs.joinToString(separator = "\n\n")
+
+    return "Screenshot of $appPackageName\n\n$ocrText"
+}
+
+fun processOCRResultsRetrieveContext(
+    ocrResults: List<Map<String, Any?>>,
+    appPackageName: String,
+    timestamp: Long
+): String {
+    // Filter out non-meaningful text
+    val meaningfulTexts = ocrResults.filter { ocrResult ->
+        val text = (ocrResult["text"] as? String)?.trim() ?: ""
+        text.isNotEmpty() && !isNonMeaningfulText(text)
+    }
+
+    // Remove sequences of 3 or more consecutive results with text length < 8
+    val filteredTexts = mutableListOf<Map<String, Any?>>()
+    var shortTextCount = 0
+
+    for (ocrResult in meaningfulTexts) {
+        val text = (ocrResult["text"] as? String)?.trim() ?: ""
+        if (text.length < 8) {
+            shortTextCount++
+        } else {
+            shortTextCount = 0
+        }
+
+        // Include the result only if the short text count is less than 3
+        if (shortTextCount < 3) {
+            filteredTexts.add(ocrResult)
+        } else if (shortTextCount == 3) {
+            // Remove the last two entries when we detect a streak of 3
+            repeat(2) { filteredTexts.removeLastOrNull() }
+        }
+    }
+
+    // Group texts by block_num
+    val textsByBlockNum = filteredTexts.groupBy { it["block_num"] as Int }
+
+    // Sort the blocks by block_num to maintain order
+    val sortedBlocks = textsByBlockNum.entries.sortedBy { entry ->
+        entry.value.minOf { it["y"] as Int }
+    }
+
+    val paragraphs = sortedBlocks.map { (_, blockTexts) ->
+        val sortedBlockTexts = blockTexts.sortedWith(
+            compareBy({ it["y"] as Int }, { it["x"] as Int })
+        )
+        sortedBlockTexts.joinToString(separator = " ") { it["text"] as String }
+    }
+
+    val ocrText = paragraphs.joinToString(separator = "\n\n")
+    val localTime = convertToLocalTime(timestamp)
+
+    return "Screenshot of $appPackageName at $localTime\n\n$ocrText"
 }
