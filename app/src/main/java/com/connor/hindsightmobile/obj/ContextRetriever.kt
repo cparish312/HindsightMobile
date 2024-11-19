@@ -59,7 +59,6 @@ class ContextRetriever(context : Context){
             for ((score, frame) in filteredResults) {
                 val timeAgoInHours = (System.currentTimeMillis() - frame.timestamp) / (1000.0 * 60 * 60)
                 val timeDecayFactor = 1.0 / (1 + 0.001 * timeAgoInHours)
-                Log.d("ContextRetriever", "Time decay factor for ${frame.frameId}: $timeAgoInHours ${(1 - timeDecayFactor)}")
                 val combinedDistance = score * (1 - timeDecayFactor)
                 timeDecayedResults.add(Pair(combinedDistance.toFloat(), frame))
             }

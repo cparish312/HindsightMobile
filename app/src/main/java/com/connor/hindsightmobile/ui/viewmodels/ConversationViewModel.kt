@@ -20,6 +20,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.connor.hindsightmobile.App
+import com.connor.hindsightmobile.R
 import com.connor.hindsightmobile.models.ModelInfo
 import com.connor.hindsightmobile.models.ModelInfoProvider
 import com.connor.hindsightmobile.obj.ContextRetriever
@@ -36,6 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.TreeMap
 import kotlin.math.round
+import androidx.compose.ui.res.stringResource
 
 class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
 
@@ -190,7 +192,7 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
         uiState.addMessage(message)
         uiState.addMessage(
             Message(
-                "Assistant",
+                app.getString(R.string.assistant_name),
                 "",
             )
         )
@@ -211,7 +213,6 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
             uiState.addPromptToLastMessage(messageWithContext)
 
             val antiPrompt = _loadedModel.value?.antiPrompt
-
 
             Log.d("ConversationViewModel", "messageWithContext: $messageWithContext")
 

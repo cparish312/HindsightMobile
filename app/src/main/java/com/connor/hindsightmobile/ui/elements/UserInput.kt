@@ -80,7 +80,7 @@ fun UserInput(
 
     if (isSending) {
         LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(2000) // Adjust delay time as needed
+            kotlinx.coroutines.delay(10000) // Adjust delay time as needed
             isSending = false
         }
     }
