@@ -45,6 +45,15 @@ fun processOCRResultsIngest(ocrResults: List<Map<String, Any?>>, appPackageName:
     return "Screenshot of $appPackageName\n\n$ocrText"
 }
 
+//fun processOCRResultsRetrieveContext(ocrResults: List<Map<String, Any?>>,
+//                                     appPackageName: String,
+//                                     timestamp: Long): String {
+//
+//    val localTime = convertToLocalTime(timestamp)
+//
+//    return "Screenshot of $appPackageName at $localTime\n\n$ocrResults"
+//}
+
 fun processOCRResultsRetrieveContext(ocrResults: List<Map<String, Any?>>,
                                      appPackageName: String,
                                      timestamp: Long): String {
