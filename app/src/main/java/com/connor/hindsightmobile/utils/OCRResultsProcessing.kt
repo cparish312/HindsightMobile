@@ -69,7 +69,26 @@ fun processOCRResultsRetrieveContext(ocrResults: List<Map<String, Any?>>,
         sortedBlockTexts.joinToString(separator = " ") { it["text"] as String }
     }
 
-    val ocrText = paragraphs.joinToString(separator = "\n\n")
+    val filteredTexts = mutableListOf<String>()
+    var shortTextCount = 0
+
+    for (text in paragraphs) {
+        if (text.length < 8) {
+            shortTextCount++
+        } else {
+            shortTextCount = 0
+        }
+
+        // Include the result only if the short text count is less than 3
+        if (shortTextCount < 3) {
+            filteredTexts.add(text)
+        } else if (shortTextCount == 3) {
+            // Remove the last two entries when we detect a streak of 3
+            repeat(2) { filteredTexts.removeLastOrNull() }
+        }
+    }
+
+    val ocrText = filteredTexts.joinToString(separator = "\n\n")
     val localTime = convertToLocalTime(timestamp)
 
     return "Screenshot of $appPackageName at $localTime\n\n$ocrText"
