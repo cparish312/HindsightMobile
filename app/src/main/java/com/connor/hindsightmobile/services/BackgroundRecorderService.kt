@@ -81,6 +81,15 @@ class BackgroundRecorderService : RecorderService() {
                     )
                     Log.d("BackgroundRecorderService", "RECORDING_SETTTINGS_UPDATED")
                 }
+                Intent.ACTION_POWER_CONNECTED -> {
+                    Log.d("BackgroundRecorderService", "Power connected broadcast received")
+                    if (Preferences.prefs.getBoolean(Preferences.autoingestenabled, false) &&
+                        !IngestScreenshotsService.isRunning.value) {
+                        Log.d("BackgroundRecorderService", "Starting IngestScreenshotsService")
+                        val ingestIntent = Intent(this@BackgroundRecorderService, IngestScreenshotsService::class.java)
+                        ContextCompat.startForegroundService(this@BackgroundRecorderService, ingestIntent)
+                    }
+                }
             }
         }
     }
@@ -99,6 +108,7 @@ class BackgroundRecorderService : RecorderService() {
         }
         val intentFilter = IntentFilter().apply {
             addAction(ManageRecordingsViewModel.RECORDING_SETTTINGS_UPDATED)
+            addAction(Intent.ACTION_POWER_CONNECTED)
         }
         ContextCompat.registerReceiver(
             this,

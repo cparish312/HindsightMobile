@@ -24,6 +24,7 @@ import com.connor.hindsightmobile.R
 import com.connor.hindsightmobile.models.ModelInfo
 import com.connor.hindsightmobile.models.ModelInfoProvider
 import com.connor.hindsightmobile.obj.ContextRetriever
+import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.utils.Preferences
 import com.connor.llamacpp.LlamaCpp
 import com.connor.llamacpp.LlamaGenerationCallback
@@ -32,12 +33,12 @@ import com.connor.llamacpp.LlamaModel
 import com.connor.llamacpp.LlamaProgressCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.TreeMap
 import kotlin.math.round
-import androidx.compose.ui.res.stringResource
 
 class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
 
@@ -54,11 +55,13 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
         app.getSystemService(DOWNLOAD_SERVICE) as DownloadManager
     }
     private val contextRetriever: ContextRetriever = ContextRetriever(app)
+    private val _ingestionRunning = IngestScreenshotsService.isRunning
 
     val isGenerating: LiveData<Boolean> = _isGenerating
     val modelLoadingProgress: LiveData<Float> = _modelLoadingProgress
     val loadedModel: LiveData<ModelInfo?> = _loadedModel
     val models: LiveData<List<ModelInfo>> = _models
+    val ingestionRunning: MutableStateFlow<Boolean> = _ingestionRunning
 
     val uiState = ConversationUiState(
         initialMessages = emptyList()
@@ -105,6 +108,13 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
             IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
             ContextCompat.RECEIVER_EXPORTED
         )
+
+        viewModelScope.launch {
+            val isRunning = IngestScreenshotsService.isRunning.value
+            Log.d("ConversationViewModel", "ingestionRunning: $isRunning")
+            ingestionRunning.value = isRunning
+            Log.d("ConversationViewModel", "ingestionRunning value:  $ingestionRunning.value")
+        }
 
         val defaultModelName = Preferences.prefs.getString(Preferences.defaultllmname, null)
         if (defaultModelName != null) {

@@ -105,6 +105,15 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         onCreate(db)
     }
 
+    fun getNumFrames(): Int? {
+        val db = this.readableDatabase
+        val query = "SELECT COUNT(*) FROM $TABLE_FRAMES"
+        val cursor = db.rawQuery(query, null)
+        val count = if (cursor.moveToFirst()) cursor.getInt(0) else null
+        cursor.close()
+        return count
+    }
+
     fun insertFrame(timestamp: Long, application: String?, videoChunkId: Int?, videoChunkOffset: Int?): Long {
         if (frameExists(timestamp, application)) {
             // Log.d("DB", "Frame with timestamp: $timestamp and application: $application already exists. Skipping insertion.")

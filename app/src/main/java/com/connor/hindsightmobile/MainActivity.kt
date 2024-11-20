@@ -3,6 +3,9 @@ package com.connor.hindsightmobile
 import android.app.Activity
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionConfig
@@ -21,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.connor.hindsightmobile.models.RecorderModel
-import com.connor.hindsightmobile.obj.IngestAlarmReceiver
 import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.services.RecorderService
 import com.connor.hindsightmobile.services.BackgroundRecorderService
@@ -64,7 +66,7 @@ class MainActivity : ComponentActivity() {
         }
 
         if (Preferences.prefs.getBoolean(Preferences.autoingestenabled, false)) {
-            scheduleIngestAlarm(this)
+            scheduleIngestJob(this)
         }
     }
 
@@ -100,42 +102,35 @@ class MainActivity : ComponentActivity() {
             Log.d("MainActivity", "IngestScreenshotsService is already running")
             return
         }
-        val uploadIntent = Intent(this@MainActivity, IngestScreenshotsService::class.java)
-        ContextCompat.startForegroundService(this@MainActivity, uploadIntent)
+        val ingestIntent = Intent(this@MainActivity, IngestScreenshotsService::class.java)
+        ContextCompat.startForegroundService(this@MainActivity, ingestIntent)
     }
 }
 
-fun scheduleIngestAlarm(context: Context) {
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-    // Intent to trigger the BroadcastReceiver
-    val alarmIntent = Intent(context, IngestAlarmReceiver::class.java).let { intent ->
-        PendingIntent.getBroadcast(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-    }
-
+fun scheduleIngestJob(context: Context) {
+    val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
     val autoIngestTime = Preferences.prefs.getInt(Preferences.autoingesttime, 2)
+
     val calendar = Calendar.getInstance().apply {
         timeInMillis = System.currentTimeMillis()
         set(Calendar.HOUR_OF_DAY, autoIngestTime)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
         if (before(Calendar.getInstance())) {
-            add(Calendar.DAY_OF_MONTH, 1) // Set for the next day if time has passed
+            add(Calendar.DAY_OF_MONTH, 1)
         }
     }
 
-    alarmManager.setRepeating(
-        AlarmManager.RTC_WAKEUP,
-        calendar.timeInMillis,
-        AlarmManager.INTERVAL_DAY,
-        alarmIntent
-    )
+    val jobInfo = JobInfo.Builder(1, ComponentName(context, IngestScreenshotsService::class.java))
+        .setRequiresCharging(true)
+        .setMinimumLatency(calendar.timeInMillis - System.currentTimeMillis()) // Delay before running
+        .setOverrideDeadline(calendar.timeInMillis - System.currentTimeMillis() + AlarmManager.INTERVAL_DAY)
+        .setPersisted(true) // Persist across reboots
+        .build()
+
+    jobScheduler.schedule(jobInfo)
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
