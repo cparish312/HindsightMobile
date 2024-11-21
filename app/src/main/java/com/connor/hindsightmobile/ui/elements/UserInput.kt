@@ -80,7 +80,7 @@ fun UserInput(
 
     if (isSending) {
         LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(10000) // Adjust delay time as needed
+            kotlinx.coroutines.delay(1000) // Adjust delay time as needed
             isSending = false
         }
     }
@@ -105,10 +105,12 @@ fun UserInput(
                 },
                 sendMessageEnabled = textState.text.isNotBlank() && !isSending,
                 onMessageSent = {
-                    isSending = true
-                    onMessageSent(textState.text)
-                    textState = TextFieldValue()
-                    resetScroll()
+                    if (!isSending) {
+                        isSending = true
+                        onMessageSent(textState.text)
+                        textState = TextFieldValue()
+                        resetScroll()
+                    }
                 },
                 onCancelClicked = onCancelClicked
             )
