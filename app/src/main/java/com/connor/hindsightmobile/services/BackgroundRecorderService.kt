@@ -14,6 +14,7 @@ import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -85,9 +86,17 @@ class BackgroundRecorderService : RecorderService() {
                     Log.d("BackgroundRecorderService", "Power connected broadcast received")
                     if (Preferences.prefs.getBoolean(Preferences.autoingestenabled, false) &&
                         !IngestScreenshotsService.isRunning.value) {
-                        Log.d("BackgroundRecorderService", "Starting IngestScreenshotsService")
-                        val ingestIntent = Intent(this@BackgroundRecorderService, IngestScreenshotsService::class.java)
-                        ContextCompat.startForegroundService(this@BackgroundRecorderService, ingestIntent)
+                        val batteryIntent = context?.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+                        val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+                        val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+                        val batteryPercentage = (level / scale.toFloat()) * 100
+                        if (batteryPercentage > 10) {
+                            Log.d("BackgroundRecorderService", "Starting IngestScreenshotsService")
+                            val ingestIntent = Intent(this@BackgroundRecorderService, IngestScreenshotsService::class.java)
+                            ContextCompat.startForegroundService(this@BackgroundRecorderService, ingestIntent)
+                        } else{
+                            Log.d("BackgroundRecorderService", "Battery is low, not starting IngestScreenshotsService")
+                        }
                     }
                 }
             }
