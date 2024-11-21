@@ -23,30 +23,17 @@ class App : Application() {
 
         // Create a crash log file
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            try {
-                logCrashToFile(throwable)
-            } catch (e: Exception) {
-                Log.e("App", "Error logging crash", e)
-            } finally {
-                // Invoke the default handler if it's not the custom handler itself
-                Thread.getDefaultUncaughtExceptionHandler()?.let { defaultHandler ->
-                    if (defaultHandler != Thread.currentThread().uncaughtExceptionHandler) {
-                        defaultHandler.uncaughtException(thread, throwable)
-                    } else {
-                        Log.e("App", "No valid default handler found")
-                    }
-                }
+            logCrashToFile(throwable)
+            Thread.getDefaultUncaughtExceptionHandler()?.let { defaultHandler ->
+                defaultHandler.uncaughtException(thread, throwable)
             }
         }
     }
 
+    // Not sure why the log file doesn't seem to get created
     private fun logCrashToFile(throwable: Throwable) {
         try {
             val logFile = File(getExternalFilesDir(null), "crash_logs.txt")
-            if (!logFile.exists()) {
-                logFile.createNewFile()
-                Log.d("App", "Crash log file created successfully.")
-            }
             val logWriter = PrintWriter(FileOutputStream(logFile, true))
             logWriter.println("Crash Log: ${Date()}")
             throwable.printStackTrace(logWriter)
