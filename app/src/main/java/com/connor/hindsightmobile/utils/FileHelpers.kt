@@ -44,3 +44,50 @@ fun getAssetFile(context: Context, assetName: String): File {
     }
     return file
 }
+
+fun getDirectorySize(directory: File): Long {
+    var size: Long = 0
+    if (directory.isDirectory) {
+        val files = directory.listFiles()
+        if (files != null) {
+            for (file in files) {
+                size += if (file.isDirectory) getDirectorySize(file) else file.length()
+            }
+        }
+    } else {
+        size += directory.length()
+    }
+    return size
+}
+
+fun formatSize(size: Long): String {
+    val kb = size / 1024.0
+    val mb = kb / 1024.0
+    val gb = mb / 1024.0
+
+    return when {
+        gb >= 1 -> String.format("%.2f GB", gb)
+        mb >= 1 -> String.format("%.2f MB", mb)
+        kb >= 1 -> String.format("%.2f KB", kb)
+        else -> "$size B"
+    }
+}
+
+fun getAppDiskUsage(context: Context): String {
+    val appDirs = listOf(
+        context.filesDir, // Internal storage files
+        context.cacheDir, // Internal storage cache
+        context.getExternalFilesDir(null), // External storage files
+        context.externalCacheDir // External storage cache
+    )
+
+    var totalSize: Long = 0
+    for (dir in appDirs) {
+        if (dir != null && dir.exists()) {
+            totalSize += getDirectorySize(dir)
+        }
+    }
+
+    val formattedSize = formatSize(totalSize)
+    return formattedSize
+}

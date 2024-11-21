@@ -31,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.connor.hindsightmobile.MainActivity
 import com.connor.hindsightmobile.ui.viewmodels.SettingsViewModel
+import com.connor.hindsightmobile.utils.getAppDiskUsage
 import dev.jeziellago.compose.markdowntext.MarkdownText
 import observeNumFrames
 
@@ -41,6 +42,7 @@ fun SettingsScreen(navController: NavController,
     val context = LocalContext.current
 
     val numFrames = observeNumFrames(context).collectAsState(initial = 0)
+    val diskUsage = getAppDiskUsage(context)
 
     LaunchedEffect(key1 = settingsViewModel) {
         settingsViewModel.events.collect { event ->
@@ -83,6 +85,7 @@ fun SettingsScreen(navController: NavController,
                     markdown = """
                         | ## Stats
                         | ### Total Ingested Frames: ${numFrames.value}
+                        | ### Disk Usage: $diskUsage
                     """.trimMargin(),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,

@@ -337,7 +337,10 @@ class IngestScreenshotsService : LifecycleService() {
 
                 val applicationDashes = application?.replace(".", "-")
                 val videoFile = File(videoFilesDirectory, "${applicationDashes}_$date.mp4")
-                createVideoFromScreenshots(sortedScreenshots, videoFile)
+                // Stop Running compression if the screen is on
+                if (!RecorderService.screenOn) {
+                    createVideoFromScreenshots(sortedScreenshots, videoFile)
+                }
             }
         }
         Log.d("IngestScreenshotsService", "Compression into videos completed")
@@ -354,8 +357,10 @@ class IngestScreenshotsService : LifecycleService() {
             ingestScreenshotsIntoFrames(sortedScreenshots)
             runAllOCR()
             embedScreenshots()
-            compressScreenshotsIntoVideos()
-
+            // Only run compression if the screen is off
+            if (!RecorderService.screenOn) {
+                compressScreenshotsIntoVideos()
+            }
         } catch (e: Exception) {
             Log.e("IngestScreenshotsService", "Error during ingestion", e)
         }

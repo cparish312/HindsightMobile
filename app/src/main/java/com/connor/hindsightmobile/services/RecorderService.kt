@@ -39,7 +39,6 @@ abstract class RecorderService : LifecycleService() {
     var onRecorderStateChanged: (RecorderState) -> Unit = {}
     open val fgServiceType: Int? = null
     var recorderState: RecorderState = RecorderState.IDLE
-    var screenOn: Boolean = true
 
     private val recorderReceiver = object : BroadcastReceiver() {
         @SuppressLint("NewApi")
@@ -247,5 +246,6 @@ abstract class RecorderService : LifecycleService() {
         const val STOP_ACTION = "STOP"
         const val PAUSE_RESUME_ACTION = "PR"
         const val FROM_RECORDER_SERVICE = "com.connor.hindsightmobile.FROM_RECORDER_SERVICE"
+        var screenOn: Boolean = true
     }
 }
