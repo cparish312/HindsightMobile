@@ -24,9 +24,7 @@ class App : Application() {
         // Create a crash log file
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             logCrashToFile(throwable)
-            Thread.getDefaultUncaughtExceptionHandler()?.let { defaultHandler ->
-                defaultHandler.uncaughtException(thread, throwable)
-            }
+            Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(thread, throwable)
         }
     }
 
