@@ -284,7 +284,6 @@ class BackgroundRecorderService : RecorderService() {
 
     companion object {
         var isRunning = false
-        var phoneCharging = false
         const val SCREEN_RECORDER_STOPPED = "com.connor.hindsightmobile.SCREEN_RECORDER_STOPPED"
     }
 }
