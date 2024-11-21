@@ -1,6 +1,7 @@
 package com.connor.hindsightmobile
 
 import android.app.Application
+import android.util.Log
 import com.connor.hindsightmobile.obj.ObjectBoxStore
 import com.connor.hindsightmobile.utils.NotificationHelper
 import com.connor.hindsightmobile.utils.Preferences
@@ -22,14 +23,30 @@ class App : Application() {
 
         // Create a crash log file
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            logCrashToFile(throwable)
-            Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(thread, throwable)
+            try {
+                logCrashToFile(throwable)
+            } catch (e: Exception) {
+                Log.e("App", "Error logging crash", e)
+            } finally {
+                // Invoke the default handler if it's not the custom handler itself
+                Thread.getDefaultUncaughtExceptionHandler()?.let { defaultHandler ->
+                    if (defaultHandler != Thread.currentThread().uncaughtExceptionHandler) {
+                        defaultHandler.uncaughtException(thread, throwable)
+                    } else {
+                        Log.e("App", "No valid default handler found")
+                    }
+                }
+            }
         }
     }
 
     private fun logCrashToFile(throwable: Throwable) {
         try {
             val logFile = File(getExternalFilesDir(null), "crash_logs.txt")
+            if (!logFile.exists()) {
+                logFile.createNewFile()
+                Log.d("App", "Crash log file created successfully.")
+            }
             val logWriter = PrintWriter(FileOutputStream(logFile, true))
             logWriter.println("Crash Log: ${Date()}")
             throwable.printStackTrace(logWriter)

@@ -27,6 +27,8 @@ import com.connor.hindsightmobile.obj.OCRResult
 import com.connor.hindsightmobile.obj.ObjectBoxFrame
 import com.connor.hindsightmobile.obj.ObjectBoxFrame_
 import com.connor.hindsightmobile.obj.ObjectBoxStore
+import com.connor.hindsightmobile.obj.UserActivityState
+import com.connor.hindsightmobile.utils.Preferences
 import com.connor.hindsightmobile.utils.getImageFiles
 import com.connor.hindsightmobile.utils.getUnprocessedScreenshotsDirectory
 import com.connor.hindsightmobile.utils.getVideoFilesDirectory
@@ -357,10 +359,13 @@ class IngestScreenshotsService : LifecycleService() {
             ingestScreenshotsIntoFrames(sortedScreenshots)
             runAllOCR()
             embedScreenshots()
-            // Only run compression if the screen is off
-            if (!RecorderService.screenOn) {
+            // Only run compression if the screen is off and phone is charging
+            if (!RecorderService.screenOn && UserActivityState.phoneCharging) {
                 compressScreenshotsIntoVideos()
             }
+
+            val currentTimestamp = System.currentTimeMillis()
+            Preferences.prefs.edit().putLong(Preferences.lastingesttimestamp, currentTimestamp).apply()
         } catch (e: Exception) {
             Log.e("IngestScreenshotsService", "Error during ingestion", e)
         }

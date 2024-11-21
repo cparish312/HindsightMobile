@@ -10,10 +10,10 @@ object Preferences {
     const val screenrecordingenabled = "ScreenRecordingEnabled"
     const val recordwhenactive = "RecordWhenActive"
     const val autoingestenabled = "AutoIngest"
-    const val autoingesttime = "AutoIngestTime"
-    const val audoingestinterval = "AutoIngestInterval"
+    const val autoingestwhennotcharging = "AutoIngestWhenNotCharging"
     const val defaultllmname = "DefaultLLMName"
     const val defaultrecordapps = "DefaultRecordApps"
+    const val lastingesttimestamp = "LastingestTimestamp"
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE)
@@ -30,12 +30,16 @@ object Preferences {
             prefs.edit().putBoolean(autoingestenabled, true).apply()
         }
 
-        if (!prefs.contains(autoingesttime)) {
-            prefs.edit().putInt(autoingesttime, 2).apply()
+        if (!prefs.contains(autoingestwhennotcharging)) {
+            prefs.edit().putBoolean(autoingestwhennotcharging, true).apply()
         }
 
         if (!prefs.contains(defaultrecordapps)) {
             prefs.edit().putBoolean(defaultrecordapps, false).apply()
+        }
+
+        if (!prefs.contains(lastingesttimestamp)) {
+            prefs.edit().putLong(lastingesttimestamp, 0).apply()
         }
     }
 }

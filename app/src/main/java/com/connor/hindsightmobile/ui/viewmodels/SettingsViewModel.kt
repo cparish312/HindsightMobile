@@ -35,12 +35,12 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
     )
     val autoIngestEnabled = _autoIngestEnabled.asStateFlow()
 
-    val isIngesting = IngestScreenshotsService.isRunning.asStateFlow()
-
-    private val _autoIngestTime = MutableStateFlow(
-        Preferences.prefs.getInt(Preferences.autoingesttime, 2)
+    private val _autoIngestWhenNotCharging = MutableStateFlow(
+        Preferences.prefs.getBoolean(Preferences.autoingestwhennotcharging, false)
     )
-    val autoIngestTime = _autoIngestTime.asStateFlow()
+    val autoIngestWhenNotCharging = _autoIngestWhenNotCharging.asStateFlow()
+
+    val isIngesting = IngestScreenshotsService.isRunning.asStateFlow()
 
     private val _eventChannel = Channel<UIEvent>()
     val events = _eventChannel.receiveAsFlow()
@@ -114,11 +114,12 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
             .apply()
     }
 
-    fun updateAutoIngestTime(time: Int) {
-        _autoIngestTime.value = time
-        Preferences.prefs.edit().putInt(Preferences.autoingesttime, _autoIngestTime.value)
+    fun toggleAutoIngestWhenNotCharging() {
+        _autoIngestWhenNotCharging.value = !_autoIngestWhenNotCharging.value
+        Preferences.prefs.edit().putBoolean(Preferences.autoingestwhennotcharging, _autoIngestWhenNotCharging.value)
             .apply()
     }
+
 
     sealed class UIEvent {
         object RequestScreenCapturePermission : UIEvent()

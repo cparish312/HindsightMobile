@@ -1,11 +1,7 @@
 package com.connor.hindsightmobile
 
+import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionConfig
@@ -23,14 +19,22 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.connor.hindsightmobile.models.RecorderModel
+import com.connor.hindsightmobile.obj.IngestWorker
 import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.services.RecorderService
 import com.connor.hindsightmobile.services.BackgroundRecorderService
 import com.connor.hindsightmobile.ui.screens.AppNavigation
 import com.connor.hindsightmobile.ui.theme.HindsightMobileTheme
 import com.connor.hindsightmobile.utils.Preferences
-import java.util.Calendar
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     private lateinit var mediaProjectionManager: MediaProjectionManager
@@ -66,7 +70,9 @@ class MainActivity : ComponentActivity() {
         }
 
         if (Preferences.prefs.getBoolean(Preferences.autoingestenabled, false)) {
-            scheduleIngestJob(this)
+            lifecycleScope.launch {
+                schedulePeriodicIngestion(this@MainActivity)
+            }
         }
     }
 
@@ -105,32 +111,35 @@ class MainActivity : ComponentActivity() {
         val ingestIntent = Intent(this@MainActivity, IngestScreenshotsService::class.java)
         ContextCompat.startForegroundService(this@MainActivity, ingestIntent)
     }
-}
 
-fun scheduleIngestJob(context: Context) {
-    val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-    val autoIngestTime = Preferences.prefs.getInt(Preferences.autoingesttime, 2)
-
-    val calendar = Calendar.getInstance().apply {
-        timeInMillis = System.currentTimeMillis()
-        set(Calendar.HOUR_OF_DAY, autoIngestTime)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        if (before(Calendar.getInstance())) {
-            add(Calendar.DAY_OF_MONTH, 1)
+    @SuppressLint("IdleBatteryChargingConstraints")
+    suspend fun schedulePeriodicIngestion(context: Context) {
+        delay(5000)
+        val constraints = if (Preferences.prefs.getBoolean(Preferences.autoingestwhennotcharging, false)) {
+            Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
+                .setRequiresDeviceIdle(true) // Add idle constraint
+                .build()
+        } else {
+            Constraints.Builder()
+                .setRequiresCharging(true)
+                .setRequiresBatteryNotLow(true)
+                .setRequiresDeviceIdle(true) // Add idle constraint
+                .build()
         }
+
+        val periodicWorkRequest = PeriodicWorkRequestBuilder<IngestWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "IngestPeriodicWork",
+            ExistingPeriodicWorkPolicy.REPLACE,
+            periodicWorkRequest
+        )
     }
 
-    val jobInfo = JobInfo.Builder(1, ComponentName(context, IngestScreenshotsService::class.java))
-        .setRequiresCharging(true)
-        .setMinimumLatency(calendar.timeInMillis - System.currentTimeMillis()) // Delay before running
-        .setOverrideDeadline(calendar.timeInMillis - System.currentTimeMillis() + AlarmManager.INTERVAL_DAY)
-        .setPersisted(true) // Persist across reboots
-        .build()
-
-    jobScheduler.schedule(jobInfo)
 }
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
