@@ -44,7 +44,7 @@ class ContextRetriever(context : Context){
                         !frame.frameText.toString().matches(Regex("^[\\s\\d.,:]*$"))
                 }.sortedByDescending { it.second.timestamp }
 
-            // Filter to keep only the first (most recent) frame in each n_seconds time group
+            // Filter to keep only the latest frame in each n_seconds time group
             val filteredResults = mutableListOf<Pair<Float, ObjectBoxFrame>>()
             var lastTimestamp: Long? = null
 

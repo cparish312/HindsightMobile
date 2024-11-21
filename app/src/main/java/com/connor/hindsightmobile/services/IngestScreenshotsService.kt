@@ -48,6 +48,8 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.tasks.await
+import java.util.TimeZone
+import kotlin.coroutines.cancellation.CancellationException
 
 class IngestScreenshotsService : LifecycleService() {
     val notificationTitle: String = "Hindsight Ingest Screenshots"
@@ -65,6 +67,12 @@ class IngestScreenshotsService : LifecycleService() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.getStringExtra(IngestScreenshotsService.ACTION_EXTRA_KEY)) {
                 STOP_ACTION -> {
+                    onDestroy()
+                }
+            }
+            when (intent?.action) {
+                "com.connor.hindsightmobile.CHAT_STARTED" -> {
+                    Log.d("IngestScreenshotsService", "Stopping Ingestion because Chat started")
                     onDestroy()
                 }
             }
@@ -94,6 +102,7 @@ class IngestScreenshotsService : LifecycleService() {
 
         val intentFilter = IntentFilter().apply {
             addAction(IngestScreenshotsService.INGEST_SCREENSHOTS_INTENT_ACTION)
+            addAction("com.connor.hindsightmobile.CHAT_STARTED")
         }
         ContextCompat.registerReceiver(
             this,
@@ -182,6 +191,8 @@ class IngestScreenshotsService : LifecycleService() {
                 blockNum++
             }
             dbHelper.insertOCRResults(frameId, ocrResults)
+        } catch (e: CancellationException) {
+            Log.e("IngestScreenshotsService", "OCR job cancelled: ${e.message}")
         } catch (e: Exception) {
             Log.e("IngestScreenshotsService", "Error performing OCR", e)
         }
@@ -207,7 +218,7 @@ class IngestScreenshotsService : LifecycleService() {
                     Log.e("IngestScreenshotsService", "OCR failed for frameId $frameId", e)
                 }
             }
-            delay(100)
+            delay(200)
         }
     }
 
@@ -262,6 +273,7 @@ class IngestScreenshotsService : LifecycleService() {
     }
 
     private fun createVideoFromScreenshots(screenshotFiles: List<File>, outputFile: File) {
+        Log.d("IngestScreenshotsService", "Compressing ${screenshotFiles.size} screenshots into $outputFile")
         // Create a temporary text file listing all screenshot file paths
         val fileList = File(cacheDir, "screenshot_list.txt")
         BufferedWriter(FileWriter(fileList)).use { writer ->
@@ -269,6 +281,11 @@ class IngestScreenshotsService : LifecycleService() {
                 writer.write("file '${file.path}'\n")
                 writer.write("duration 2\n")
             }
+        }
+
+        // In case the compression was interrupted
+        if (outputFile.exists()) {
+            outputFile.delete()
         }
 
         val ffmpegCommand = "-f concat -safe 0 -i ${fileList.path} -c:v h264 -pix_fmt yuv420p -r 1 ${outputFile.path}"
@@ -297,7 +314,9 @@ class IngestScreenshotsService : LifecycleService() {
     }
 
     private suspend fun compressScreenshotsIntoVideos() {
-        val dateFormatter = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+        val dateFormatter = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
         val today = dateFormatter.format(Calendar.getInstance().time)
 
         val groupedScreenshots = getImageFiles(unprocessedScreenshotsDirectory).groupBy { file ->
@@ -396,7 +415,6 @@ class IngestScreenshotsService : LifecycleService() {
             }
 
             ServiceCompat.stopForeground(this@IngestScreenshotsService, ServiceCompat.STOP_FOREGROUND_REMOVE)
-            Log.d("IngestScreenshotsService", "onDestroy")
             stopSelf()
             super.onDestroy()
         }

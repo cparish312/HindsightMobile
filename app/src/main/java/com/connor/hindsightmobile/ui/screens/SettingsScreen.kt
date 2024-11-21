@@ -32,12 +32,15 @@ import androidx.navigation.NavController
 import com.connor.hindsightmobile.MainActivity
 import com.connor.hindsightmobile.ui.viewmodels.SettingsViewModel
 import dev.jeziellago.compose.markdowntext.MarkdownText
+import observeNumFrames
 
 @Composable
 fun SettingsScreen(navController: NavController,
                    settingsViewModel: SettingsViewModel = viewModel(),
 ){
     val context = LocalContext.current
+
+    val numFrames = observeNumFrames(context).collectAsState(initial = 0)
 
     LaunchedEffect(key1 = settingsViewModel) {
         settingsViewModel.events.collect { event ->
@@ -74,6 +77,17 @@ fun SettingsScreen(navController: NavController,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,
                     modifier = Modifier.padding(16.dp)
+                )
+
+                MarkdownText(
+                    markdown = """
+                        | ## Stats
+                        | ### Total Ingested Frames: ${numFrames.value}
+                    """.trimMargin(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(16.dp)
+
                 )
 
                 MarkdownText(
