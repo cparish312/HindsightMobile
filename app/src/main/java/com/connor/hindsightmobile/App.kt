@@ -1,6 +1,7 @@
 package com.connor.hindsightmobile
 
 import android.app.Application
+import android.util.Log
 import com.connor.hindsightmobile.obj.ObjectBoxStore
 import com.connor.hindsightmobile.utils.NotificationHelper
 import com.connor.hindsightmobile.utils.Preferences
@@ -23,10 +24,13 @@ class App : Application() {
         // Create a crash log file
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             logCrashToFile(throwable)
-            Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(thread, throwable)
+            Thread.getDefaultUncaughtExceptionHandler()?.let { defaultHandler ->
+                defaultHandler.uncaughtException(thread, throwable)
+            }
         }
     }
 
+    // Not sure why the log file doesn't seem to get created
     private fun logCrashToFile(throwable: Throwable) {
         try {
             val logFile = File(getExternalFilesDir(null), "crash_logs.txt")

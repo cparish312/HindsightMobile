@@ -1,5 +1,9 @@
+package com.connor.hindsightmobile.utils
+
 import android.content.Context
 import com.connor.hindsightmobile.DB
+import com.connor.hindsightmobile.utils.Preferences
+import com.connor.hindsightmobile.utils.convertToLocalTime
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -12,5 +16,14 @@ fun observeNumFrames(context: Context): Flow<Int> = flow {
             emit(numFrames)
         }
         delay(1000)
+    }
+}
+
+fun observeLastIngestTime(): Flow<String> = flow {
+    while (true) {
+        val lastTimestamp = Preferences.prefs.getLong(Preferences.lastingesttimestamp, 0L)
+        val lastIngestTime = convertToLocalTime(lastTimestamp)
+        emit(lastIngestTime)
+        delay(3000L) // Poll every second (adjust as needed)
     }
 }

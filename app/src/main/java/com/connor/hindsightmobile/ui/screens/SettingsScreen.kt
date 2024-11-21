@@ -32,8 +32,10 @@ import androidx.navigation.NavController
 import com.connor.hindsightmobile.MainActivity
 import com.connor.hindsightmobile.ui.viewmodels.SettingsViewModel
 import com.connor.hindsightmobile.utils.getAppDiskUsage
+import com.connor.hindsightmobile.utils.observeLastIngestTime
+import com.connor.hindsightmobile.utils.observeNumFrames
 import dev.jeziellago.compose.markdowntext.MarkdownText
-import observeNumFrames
+
 
 @Composable
 fun SettingsScreen(navController: NavController,
@@ -43,6 +45,7 @@ fun SettingsScreen(navController: NavController,
 
     val numFrames = observeNumFrames(context).collectAsState(initial = 0)
     val diskUsage = getAppDiskUsage(context)
+    val lastIngestTime = observeLastIngestTime().collectAsState(initial = "")
 
     LaunchedEffect(key1 = settingsViewModel) {
         settingsViewModel.events.collect { event ->
@@ -86,6 +89,7 @@ fun SettingsScreen(navController: NavController,
                         | ## Stats
                         | ### Total Ingested Frames: ${numFrames.value}
                         | ### Disk Usage: $diskUsage
+                        | ### Last Ingest: ${lastIngestTime.value}
                     """.trimMargin(),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,
@@ -212,8 +216,7 @@ fun SettingsScreen(navController: NavController,
                 MarkdownText(
                     markdown = """
                     ### Auto Ingest
-                    * Automatically run ingestion at a specified hour.
-                    
+                    * Automatically runs ingestion every 15 minutes
                 """.trimIndent(),
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onSurface,
@@ -235,18 +238,31 @@ fun SettingsScreen(navController: NavController,
                     modifier = Modifier.padding(start = 25.dp)
                 )
 
-                TextField(
-                    value = settingsViewModel.autoIngestTime.collectAsState().value.toString(),
-                    onValueChange = { newValue ->
-                        val newIntValue = newValue.toIntOrNull()
-                        if (newIntValue != null) {
-                            settingsViewModel.updateAutoIngestTime(newIntValue)
-                        }
+                MarkdownText(
+                    markdown = """
+                    ### Auto Ingest When Not Charging
+                    * Run ingestion even when the device is not charging
+                """.trimIndent(),
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+
+                    )
+
+                Switch(
+                    checked = settingsViewModel.autoIngestWhenNotCharging.collectAsState().value,
+                    onCheckedChange = {
+                        settingsViewModel.toggleAutoIngestWhenNotCharging()
                     },
-                    label = { Text("Hour to Auto Ingest (military time)") },
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = MaterialTheme.colorScheme.primary, // More contrasting color when checked
+                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer, // Visible track when checked
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant, // Thumb color when unchecked
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
                     modifier = Modifier.padding(start = 25.dp)
                 )
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
