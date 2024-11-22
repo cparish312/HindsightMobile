@@ -19,22 +19,14 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.connor.hindsightmobile.models.RecorderModel
-import com.connor.hindsightmobile.obj.IngestWorker
 import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.services.RecorderService
 import com.connor.hindsightmobile.services.BackgroundRecorderService
 import com.connor.hindsightmobile.ui.screens.AppNavigation
 import com.connor.hindsightmobile.ui.theme.HindsightMobileTheme
 import com.connor.hindsightmobile.utils.Preferences
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var mediaProjectionManager: MediaProjectionManager
@@ -69,11 +61,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        if (Preferences.prefs.getBoolean(Preferences.autoingestenabled, false)) {
-            lifecycleScope.launch {
-                schedulePeriodicIngestion(this@MainActivity)
-            }
-        }
+//        if (Preferences.prefs.getBoolean(Preferences.autoingestenabled, false)) {
+//            scheduleIngestionWorker(this@MainActivity)
+//        }
     }
 
     fun requestScreenCapturePermission() {
@@ -102,43 +92,14 @@ class MainActivity : ComponentActivity() {
         recorderModel.stopRecording(this)
     }
 
-    fun ingestScreenshots(){
-        Log.d("MainActivity", "Ingesting screenshots")
-        if (IngestScreenshotsService.isRunning.value){
-            Log.d("MainActivity", "IngestScreenshotsService is already running")
+    fun ingestScreenshots() {
+        if (IngestScreenshotsService.isRunning.value) {
+            Log.d("MainActivity", "Foreground ingestion service is already running")
             return
         }
         val ingestIntent = Intent(this@MainActivity, IngestScreenshotsService::class.java)
         ContextCompat.startForegroundService(this@MainActivity, ingestIntent)
     }
-
-    @SuppressLint("IdleBatteryChargingConstraints")
-    suspend fun schedulePeriodicIngestion(context: Context) {
-        delay(5000)
-        val constraints = if (Preferences.prefs.getBoolean(Preferences.autoingestwhennotcharging, false)) {
-            Constraints.Builder()
-                .setRequiresBatteryNotLow(true)
-                .setRequiresDeviceIdle(true) // Add idle constraint
-                .build()
-        } else {
-            Constraints.Builder()
-                .setRequiresCharging(true)
-                .setRequiresBatteryNotLow(true)
-                .setRequiresDeviceIdle(true) // Add idle constraint
-                .build()
-        }
-
-        val periodicWorkRequest = PeriodicWorkRequestBuilder<IngestWorker>(15, TimeUnit.MINUTES)
-            .setConstraints(constraints)
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            "IngestPeriodicWork",
-            ExistingPeriodicWorkPolicy.REPLACE,
-            periodicWorkRequest
-        )
-    }
-
 }
 
 @RequiresApi(Build.VERSION_CODES.O)

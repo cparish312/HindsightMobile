@@ -23,6 +23,7 @@ import androidx.lifecycle.lifecycleScope
 import com.connor.hindsightmobile.MainActivity
 import com.connor.hindsightmobile.R
 import com.connor.hindsightmobile.enums.RecorderState
+import com.connor.hindsightmobile.obj.UserActivityState
 import com.connor.hindsightmobile.utils.NotificationHelper
 import com.connor.hindsightmobile.utils.PermissionHelper
 import com.connor.hindsightmobile.utils.Preferences
@@ -242,6 +243,22 @@ abstract class RecorderService : LifecycleService() {
             intent,
             PendingIntent.FLAG_IMMUTABLE
         )
+    }
+
+    fun runIngest(){
+        if (!Preferences.prefs.getBoolean(Preferences.autoingestenabled, false)){
+            return
+        }
+        if (!Preferences.prefs.getBoolean(Preferences.autoingestwhennotcharging, false)
+            && !UserActivityState.phoneCharging) {
+            return
+        }
+        if (IngestScreenshotsService.isRunning.value) {
+            Log.d("RecorderService", "Foreground ingestion service is already running")
+            return
+        }
+        val ingestIntent = Intent(this@RecorderService, IngestScreenshotsService::class.java)
+        ContextCompat.startForegroundService(this@RecorderService, ingestIntent)
     }
 
     companion object {
