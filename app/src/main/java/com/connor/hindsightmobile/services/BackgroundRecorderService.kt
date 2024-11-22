@@ -21,7 +21,6 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Display
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 import com.connor.hindsightmobile.DB
 import java.io.File
@@ -62,9 +61,6 @@ class BackgroundRecorderService : RecorderService() {
         Preferences.defaultrecordapps,
         false
     )
-
-    private lateinit var mediaProjectionManager: MediaProjectionManager
-    private lateinit var screenCaptureLauncher: ActivityResultLauncher<Intent>
 
     override val fgServiceType: Int?
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
