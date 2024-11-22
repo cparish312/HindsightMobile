@@ -60,10 +60,6 @@ class MainActivity : ComponentActivity() {
                 requestScreenCapturePermission()
             }
         }
-
-//        if (Preferences.prefs.getBoolean(Preferences.autoingestenabled, false)) {
-//            scheduleIngestionWorker(this@MainActivity)
-//        }
     }
 
     fun requestScreenCapturePermission() {
