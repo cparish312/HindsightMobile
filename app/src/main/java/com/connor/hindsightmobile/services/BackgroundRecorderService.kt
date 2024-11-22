@@ -195,24 +195,30 @@ class BackgroundRecorderService : RecorderService() {
                         return
                     }
 
-                    val image = imageReader!!.acquireLatestImage()
-                    Log.d("BackgroundRecorderService", "Image Acquired")
-                    image?.let {
-                        val buffer = it.planes[0].buffer
-                        val pixelStride = it.planes[0].pixelStride
-                        val rowStride = it.planes[0].rowStride
+                    imageReader?.let { reader ->
+                        val image = reader.acquireLatestImage()
+                        Log.d("BackgroundRecorderService", "Image Acquired")
+                        image?.let {
+                            val buffer = it.planes[0].buffer
+                            val pixelStride = it.planes[0].pixelStride
+                            val rowStride = it.planes[0].rowStride
 
-                        val offset = (rowStride - pixelStride * width) / pixelStride
-                        val w = width + offset
-                        val bitmap = Bitmap.createBitmap(w, height, Bitmap.Config.ARGB_8888)
-                        bitmap.copyPixelsFromBuffer(buffer)
+                            val offset = (rowStride - pixelStride * width) / pixelStride
+                            val w = width + offset
+                            val bitmap = Bitmap.createBitmap(w, height, Bitmap.Config.ARGB_8888)
+                            bitmap.copyPixelsFromBuffer(buffer)
 
-                        saveImageData(bitmap, this@BackgroundRecorderService, screenshotApplication)
-                        it.close()
+                            saveImageData(
+                                bitmap,
+                                this@BackgroundRecorderService,
+                                screenshotApplication
+                            )
+                            it.close()
+                        }
+                        // Schedule the next capture
+                        UserActivityState.userActive = false
+                        postRecorderLoop(this)
                     }
-                    // Schedule the next capture
-                    UserActivityState.userActive = false
-                    postRecorderLoop(this)
                 }
             }
             // Initial delay before starting the recurring task
