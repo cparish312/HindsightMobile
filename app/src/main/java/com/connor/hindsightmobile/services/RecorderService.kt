@@ -25,6 +25,7 @@ import com.connor.hindsightmobile.R
 import com.connor.hindsightmobile.enums.RecorderState
 import com.connor.hindsightmobile.utils.NotificationHelper
 import com.connor.hindsightmobile.utils.PermissionHelper
+import com.connor.hindsightmobile.utils.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,7 +45,10 @@ abstract class RecorderService : LifecycleService() {
         @SuppressLint("NewApi")
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.getStringExtra(ACTION_EXTRA_KEY)) {
-                STOP_ACTION -> onDestroy()
+                STOP_ACTION -> {
+                    Preferences.prefs.edit().putBoolean(Preferences.screenrecordingenabled, false).apply()
+                    onDestroy()
+                }
                 PAUSE_RESUME_ACTION -> {
                     if (recorderState == RecorderState.ACTIVE) pause() else resume()
                 }
