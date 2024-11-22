@@ -14,6 +14,7 @@ import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -54,6 +55,8 @@ class BackgroundRecorderService : RecorderService() {
         false
     )
     private var screenshotApplication: String? = null
+    private var screenShotsSinceAutoIngest: Int = 0
+    private var loopIterationsSinceAutoIngest: Int = 0
 
     private lateinit var dbHelper: DB
     private lateinit var appPackageToRecord: Map<String, Boolean>
@@ -81,6 +84,18 @@ class BackgroundRecorderService : RecorderService() {
                     )
                     Log.d("BackgroundRecorderService", "RECORDING_SETTTINGS_UPDATED")
                 }
+                Intent.ACTION_BATTERY_CHANGED -> {
+                    val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+                    val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                            status == BatteryManager.BATTERY_STATUS_FULL
+                    if (isCharging) {
+                        Log.d("BackgroundRecorderService", "Device is charging.")
+                        UserActivityState.phoneCharging = true
+                    } else {
+                        Log.d("BackgroundRecorderService", "Device is not charging.")
+                        UserActivityState.phoneCharging = false
+                    }
+                }
             }
         }
     }
@@ -99,6 +114,7 @@ class BackgroundRecorderService : RecorderService() {
         }
         val intentFilter = IntentFilter().apply {
             addAction(ManageRecordingsViewModel.RECORDING_SETTTINGS_UPDATED)
+            addAction(Intent.ACTION_BATTERY_CHANGED)
         }
         ContextCompat.registerReceiver(
             this,
@@ -221,6 +237,11 @@ class BackgroundRecorderService : RecorderService() {
                     }
                 }
             }
+            loopIterationsSinceAutoIngest += 1
+            if (loopIterationsSinceAutoIngest >= 1000) {
+                loopIterationsSinceAutoIngest = 0
+                runIngest()
+            }
             // Initial delay before starting the recurring task
             handler?.postDelayed(recordRunnable!!, 2000) // Start after a delay of 2 seconds
         }
@@ -245,6 +266,11 @@ class BackgroundRecorderService : RecorderService() {
             FileOutputStream(file).use { fos ->
                 bitmap.compress(Bitmap.CompressFormat.WEBP, 100, fos)
                 Log.d("BackgroundRecorderService", "Image saved to ${file.absolutePath}")
+            }
+            screenShotsSinceAutoIngest += 1
+            if (screenShotsSinceAutoIngest >= 100) {
+                screenShotsSinceAutoIngest = 0
+                runIngest()
             }
         } catch (e: IOException) {
             Log.e("BackgroundRecorderService", "Failed to save image", e)

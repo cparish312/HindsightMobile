@@ -39,6 +39,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import io.objectbox.Box
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -50,6 +51,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.util.TimeZone
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -96,6 +98,8 @@ class IngestScreenshotsService : LifecycleService() {
             )
         }
 
+        sendBroadcast(Intent(INGEST_SCREENSHOTS_STARTED))
+
         isRunning.value = true
 
         runCatching {
@@ -113,8 +117,16 @@ class IngestScreenshotsService : LifecycleService() {
             ContextCompat.RECEIVER_EXPORTED
         )
 
-        sendBroadcast(Intent(INGEST_SCREENSHOTS_STARTED))
+        lifecycleScope.launch(Dispatchers.IO) {
+            initializeResources()
+            ingestScreenshots()
+            onDestroy()
+        }
 
+        super.onCreate()
+    }
+
+    private fun initializeResources(){
         unprocessedScreenshotsDirectory = getUnprocessedScreenshotsDirectory(this)
 
         if (isTest) {
@@ -146,13 +158,6 @@ class IngestScreenshotsService : LifecycleService() {
             videoFilesDirectory = getVideoFilesDirectory(this)
             framesBox = ObjectBoxStore.store.boxFor(ObjectBoxFrame::class.java)
         }
-
-        lifecycleScope.launch {
-            ingestScreenshots()
-            onDestroy()
-        }
-
-        super.onCreate()
     }
 
     private fun ingestScreenshotsIntoFrames(screenshotFiles: List<File>){
@@ -343,6 +348,7 @@ class IngestScreenshotsService : LifecycleService() {
                 if (!RecorderService.screenOn) {
                     createVideoFromScreenshots(sortedScreenshots, videoFile)
                 }
+                createVideoFromScreenshots(sortedScreenshots, videoFile)
             }
         }
         Log.d("IngestScreenshotsService", "Compression into videos completed")
@@ -365,10 +371,12 @@ class IngestScreenshotsService : LifecycleService() {
             }
 
             val currentTimestamp = System.currentTimeMillis()
-            Preferences.prefs.edit().putLong(Preferences.lastingesttimestamp, currentTimestamp).apply()
+            Preferences.prefs.edit().putLong(Preferences.lastingesttimestamp, currentTimestamp)
+                .apply()
         } catch (e: Exception) {
             Log.e("IngestScreenshotsService", "Error during ingestion", e)
         }
+
     }
 
     private fun getPendingIntent(intent: Intent, requestCode: Int): PendingIntent =
@@ -401,7 +409,7 @@ class IngestScreenshotsService : LifecycleService() {
 
         return NotificationCompat.Builder(
             this,
-            NotificationHelper.RECORDING_NOTIFICATION_CHANNEL
+            NotificationHelper.INGESTING_NOTIFICATION_CHANNEL
         )
             .setContentTitle(notificationTitle)
             .setSmallIcon(R.drawable.ic_notification)

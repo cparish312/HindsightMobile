@@ -216,7 +216,7 @@ fun SettingsScreen(navController: NavController,
                 MarkdownText(
                     markdown = """
                     ### Auto Ingest
-                    * Automatically runs ingestion every 15 minutes
+                    * Automatically runs ingestion every 30 minutes or 100 new screenshots
                 """.trimIndent(),
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onSurface,

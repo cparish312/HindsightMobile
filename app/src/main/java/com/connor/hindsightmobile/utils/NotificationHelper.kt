@@ -7,7 +7,7 @@ import com.connor.hindsightmobile.R
 
 object NotificationHelper {
     const val RECORDING_NOTIFICATION_CHANNEL = "active_recording"
-    const val RECORDING_FINISHED_N_CHANNEL = "recording_finished"
+    const val INGESTING_NOTIFICATION_CHANNEL = "active_ingesting"
     const val RECORDING_NOTIFICATION_ID = 1
     const val INGEST_SCREENSHOTS_NOTIFICATION_ID = 2
 
@@ -16,7 +16,7 @@ object NotificationHelper {
 
         listOf(
             RECORDING_NOTIFICATION_CHANNEL to R.string.active_recording,
-            RECORDING_FINISHED_N_CHANNEL to R.string.recording_finished
+            INGESTING_NOTIFICATION_CHANNEL to R.string.active_ingesting
         ).forEach { (channelName, stringResource) ->
             val channelCompat = NotificationChannelCompat.Builder(
                 channelName,
