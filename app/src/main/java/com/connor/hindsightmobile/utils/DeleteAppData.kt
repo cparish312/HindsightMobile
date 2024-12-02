@@ -48,3 +48,21 @@ fun deleteAppData(app: AppInfo, context: Context, dbHelper: DB) {
     query.close()
 
 }
+
+fun deleteRecentScreenshotsData(millisecondsToDelete: Long, context: Context, dbHelper: DB) {
+    val cutoffTimestamp = System.currentTimeMillis() - millisecondsToDelete
+
+    dbHelper.deleteDBDataSince(cutoffTimestamp)
+
+    val unprocessedScreenshotsDirectory = getUnprocessedScreenshotsDirectory(context)
+    unprocessedScreenshotsDirectory.listFiles()?.forEach { file ->
+        val (_, fileTimestamp) = parseScreenshotFilePath(file.name)
+        if (fileTimestamp != null && fileTimestamp >= cutoffTimestamp) {
+            if (file.delete()) {
+                Log.d("DeleteRecentScreenshots", "Deleted screenshot file: ${file.name}")
+            } else {
+                Log.e("DeleteRecentScreenshots", "Failed to delete screenshot file: ${file.name}")
+            }
+        }
+    }
+}

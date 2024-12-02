@@ -9,10 +9,12 @@ import android.os.Build
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.connor.hindsightmobile.DB
 import com.connor.hindsightmobile.models.RecorderModel
 import com.connor.hindsightmobile.services.BackgroundRecorderService
 import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.utils.Preferences
+import com.connor.hindsightmobile.utils.deleteRecentScreenshotsData
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +22,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
+    private val dbHelper: DB = DB.getInstance(app)
+
     private val _screenRecordingEnabled = MutableStateFlow(
         Preferences.prefs.getBoolean(Preferences.screenrecordingenabled, false)
     )
@@ -120,6 +124,9 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
             .apply()
     }
 
+    fun deleteRecentScreenshots(millisecondsToDelete: Long){
+        deleteRecentScreenshotsData(millisecondsToDelete, getApplication(), dbHelper)
+    }
 
     sealed class UIEvent {
         object RequestScreenCapturePermission : UIEvent()

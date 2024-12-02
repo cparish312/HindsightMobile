@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -17,14 +16,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -144,7 +141,6 @@ fun SettingsScreen(navController: NavController,
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,
-
                     )
 
                 Button(
@@ -156,6 +152,52 @@ fun SettingsScreen(navController: NavController,
                     )
                 ) {
                     Text("Manage Recordings")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                MarkdownText(markdown = """
+                    ### Delete Screenshots From the Last:
+                """.trimIndent(),
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = { settingsViewModel.deleteRecentScreenshots(900000) },
+                        modifier = Modifier.padding(20.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onSurface,
+                            contentColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Text("15 Mins")
+                    }
+                    Button(
+                        onClick = { settingsViewModel.deleteRecentScreenshots(1800000) },
+                        modifier = Modifier.padding(20.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onSurface,
+                            contentColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Text("30 Mins")
+                    }
+                    Button(
+                        onClick = { settingsViewModel.deleteRecentScreenshots(3600000) },
+                        modifier = Modifier.padding(20.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onSurface,
+                            contentColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Text("1 Hour")
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

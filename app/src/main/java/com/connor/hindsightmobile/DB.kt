@@ -511,4 +511,23 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
             db.endTransaction()
         }
     }
+
+    fun deleteDBDataSince(sinceTimestamp: Long) {
+        val db = this.writableDatabase
+        db.beginTransaction()
+        try {
+            db.delete(TABLE_OCR_RESULTS, "$COLUMN_OCR_RESULT_FRAME_ID IN " +
+                    "(SELECT $COLUMN_ID FROM $TABLE_FRAMES WHERE $COLUMN_TIMESTAMP >= ?)",
+                    arrayOf(sinceTimestamp.toString()))
+
+            db.delete(TABLE_FRAMES, "$COLUMN_TIMESTAMP >= ?", arrayOf(sinceTimestamp.toString()))
+
+            db.setTransactionSuccessful()
+            Log.d("DB", "Successfully deleted frames and ocr results since: $sinceTimestamp")
+        } catch (e: Exception) {
+            Log.e("DB", "Failed to delete data frames and ocr results since: $sinceTimestamp", e)
+        } finally {
+            db.endTransaction()
+        }
+    }
 }
