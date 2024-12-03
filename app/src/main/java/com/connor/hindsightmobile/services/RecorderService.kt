@@ -60,6 +60,7 @@ abstract class RecorderService : LifecycleService() {
                 }
                 Intent.ACTION_SCREEN_ON -> {
                     screenOn = true
+                    runIngest()
                 }
             }
         }
