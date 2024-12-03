@@ -7,8 +7,8 @@
 ## Download Release
 1) Go to Settings > Apps > Special app access > Install unknown apps > give permission to Google Drive.
 2) Click on:
-    * For most Devices: https://drive.google.com/file/d/1xMIGe50zK7eGE6PCrnJKRERH2Re2u7F6/view?usp=sharing
-    * For all Devices (if the above doesn't work): https://drive.google.com/file/d/1TlaZXcry8FdFDxxypsi0KsOPdHfEebH-/view?usp=sharing
+    * For most Devices: https://drive.google.com/file/d/15DBsQR5rGPNHWFvIDrFZT4GmqoaHXhjn/view?usp=sharing
+    * For all Devices (if the above doesn't work): https://drive.google.com/file/d/1ipd-UNL40Xu2Zg9lyVUO7z1pimQsEpGb/view?usp=sharing
 3) To give accessibility permissions you may need to click on the more info section on the top right of the HindsightMobile
 accessibility section and click "allow restricted settings"
 
