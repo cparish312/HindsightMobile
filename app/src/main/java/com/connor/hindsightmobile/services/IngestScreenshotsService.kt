@@ -79,6 +79,10 @@ class IngestScreenshotsService : LifecycleService() {
                     Log.d("IngestScreenshotsService", "Stopping Ingestion because Chat started")
                     onDestroy()
                 }
+                Intent.ACTION_SCREEN_ON -> {
+                    Log.d("IngestScreenshotsService", "Stopping Ingestion because Screen is On")
+                    onDestroy()
+                }
             }
         }
     }
@@ -109,6 +113,7 @@ class IngestScreenshotsService : LifecycleService() {
         val intentFilter = IntentFilter().apply {
             addAction(IngestScreenshotsService.INGEST_SCREENSHOTS_INTENT_ACTION)
             addAction("com.connor.hindsightmobile.CHAT_STARTED")
+            addAction(Intent.ACTION_SCREEN_ON)
         }
         ContextCompat.registerReceiver(
             this,
