@@ -3,6 +3,14 @@
 2) Reads and embeds the text from each screenshot with OCR
 3) Lets you chat with anything you've seen on your phone via a local LLM (my favorite: llama3.2 1B)
 
+# Demos
+<a href="https://www.loom.com/share/8f2fc35a14ca459b9b4efaad592fe1be">
+  <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/8f2fc35a14ca459b9b4efaad592fe1be-6b271e80c1410de4-full-play.gif">
+</a>
+<a href="https://www.loom.com/share/54559342b2b34028b76e92be645942b5">
+  <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/54559342b2b34028b76e92be645942b5-96c643714f1aa0ac-full-play.gif">
+</a>
+
 # Installation
 ## Download Release
 1) Go to Settings > Apps > Special app access > Install unknown apps > give permission to Google Drive.
@@ -36,11 +44,14 @@ Setup an onboarding session or just chat about the project [here](https://calend
 * `Manage Recordings`: Takes you to manage recordings screen
   * If checked the app will be record
   * Delete all content (screenshots, videos, embeddings, OCR Results) for a given app
+* `Delete Screenshots From the Last:`
+  * Let's you delete recent screenshots and OCR results
 * `Chat`: go to chat
 * `Screen Recording`: Start Screen recording Background Process (May have to click stop on Notification to stop)
-* `Auto Ingest`: Auto Run Ingestion at
-* `Hour to Auto Ingest (Military Time)`
-    * Default is 2 am
+* `Auto Ingest`: 
+  * Runs auto ingest everytime your phone screen turns off
+* `Auto Ingest When Not Charging`:
+  * If off then auto ingestion will only run if your phone is charging
 * IMPORTANT PLEASE READ THIS `Record New Apps By Default`: when you enter an app that has not been
     recorded yet it will automatically start recording
 
