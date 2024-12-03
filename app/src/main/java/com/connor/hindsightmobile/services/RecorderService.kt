@@ -57,10 +57,10 @@ abstract class RecorderService : LifecycleService() {
             when (intent?.action) {
                 Intent.ACTION_SCREEN_OFF -> {
                     screenOn = false
+                    runIngest()
                 }
                 Intent.ACTION_SCREEN_ON -> {
                     screenOn = true
-                    runIngest()
                 }
             }
         }
