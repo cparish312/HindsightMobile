@@ -249,6 +249,10 @@ abstract class RecorderService : LifecycleService() {
         if (!Preferences.prefs.getBoolean(Preferences.autoingestenabled, false)){
             return
         }
+        // Only autoingest if screen is off
+        if (screenOn) {
+            return
+        }
         if (!Preferences.prefs.getBoolean(Preferences.autoingestwhennotcharging, false)
             && !UserActivityState.phoneCharging) {
             return
