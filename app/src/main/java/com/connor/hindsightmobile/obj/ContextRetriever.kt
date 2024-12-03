@@ -1,10 +1,8 @@
 package com.connor.hindsightmobile.obj
 
 import android.content.Context
-import android.util.Log
 import com.connor.hindsightmobile.DB
 import com.connor.hindsightmobile.embeddings.SentenceEmbeddingProvider
-import com.connor.hindsightmobile.utils.convertToLocalTime
 import com.connor.hindsightmobile.utils.processOCRResultsRetrieveContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +24,7 @@ class ContextRetriever(context : Context){
                     .and(ObjectBoxFrame_.application.notEqual("com.google.android.inputmethod.latin"))
                     .and(ObjectBoxFrame_.application.notEqual("com.google.android.apps.nexuslauncher"))
                     .and(ObjectBoxFrame_.application.notEqual("com.android.pixeldisplayservice"))
+                    .and(ObjectBoxFrame_.application.notEqual("com.google.android.googlequicksearchbox"))
                 )
                 .build()
                 .findWithScores()
