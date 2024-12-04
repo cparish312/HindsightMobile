@@ -29,7 +29,7 @@ Here is the user\'s query: $QUERY
     <string name="hindsight_recording">Hindsight Recording</string>
     <string name="record_screen">Record screen</string>
     <string name="cant_access_selected_folder">Can\'t access selected folder!</string>
-    <string name="accessibility_service_description">Accessibility service for checking user active</string>
+    <string name="accessibility_service_description">Accessibility service is for checking which app is in use and if the user is active. Knowing the app in usage is important for allowing the user to choose which apps are recorded.</string>
     <string name="assistant_name">J-ME</string>
     <string name="active_ingesting">Active ingesting\n</string>
 </resources>
