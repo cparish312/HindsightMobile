@@ -4,8 +4,8 @@
 3) Lets you chat with anything you've seen on your phone via a local LLM (my favorite: llama3.2 1B)
 
 # Demos
-<a href="https://www.loom.com/share/8f2fc35a14ca459b9b4efaad592fe1be">
-  <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/8f2fc35a14ca459b9b4efaad592fe1be-6b271e80c1410de4-full-play.gif">
+<a href="https://www.loom.com/share/3537d558aff84cf8950d4348fb76a194">
+  <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/3537d558aff84cf8950d4348fb76a194-341fff36e746979b-full-play.gif">
 </a>
 <a href="https://www.loom.com/share/54559342b2b34028b76e92be645942b5">
   <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/54559342b2b34028b76e92be645942b5-96c643714f1aa0ac-full-play.gif">
