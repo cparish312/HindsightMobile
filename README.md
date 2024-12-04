@@ -26,7 +26,7 @@
     * If getting incompatible AGP version install the newest version of Android Studio
 
 # Communication
-<a href="https://discord.gg/CmWWW94E">
+<a href="https://discord.gg/eqGN3wVe">
     <img src="https://img.shields.io/badge/Join%20us%20on-Discord-5865F2?logo=discord&logoColor=white&style=flat-square" alt="Join us on Discord">
 </a>
 
