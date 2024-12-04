@@ -12,13 +12,9 @@
 </a>
 
 # Installation
-## Download Release
-1) Go to Settings > Apps > Special app access > Install unknown apps > give permission to Google Drive.
-2) Click on:
-    * For most Devices: https://drive.google.com/file/d/15DBsQR5rGPNHWFvIDrFZT4GmqoaHXhjn/view?usp=sharing
-    * For all Devices (if the above doesn't work): https://drive.google.com/file/d/1ipd-UNL40Xu2Zg9lyVUO7z1pimQsEpGb/view?usp=sharing
-3) To give accessibility permissions you may need to click on the more info section on the top right of the HindsightMobile
-accessibility section and click "allow restricted settings"
+## Become Google Play Tester
+1. Join the Discord below and message in the `google-play-testing` channel or DM me directly
+2. If you don't have Discord you can email: `connor@hindsight.life`
 
 ## Build from Source
 1. `git clone --recursive https://github.com/cparish312/HindsightMobile.git`
