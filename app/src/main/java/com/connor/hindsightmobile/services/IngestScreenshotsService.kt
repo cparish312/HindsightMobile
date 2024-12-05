@@ -165,8 +165,19 @@ class IngestScreenshotsService : LifecycleService() {
         }
     }
 
-    private fun ingestScreenshotsIntoFrames(screenshotFiles: List<File>){
-        screenshotFiles.forEach{ file ->
+    private fun ingestScreenshotsIntoFrames(){
+        val screenshotFiles = getImageFiles(unprocessedScreenshotsDirectory)
+        val ingestedFrames = dbHelper.getAllFrameTimestampsAndApplications().toSet()
+        // Filter for any screenshots that have already been added
+        val nonIngestedScreenshots = screenshotFiles.filter { file ->
+            val (fileApplication, fileTimestamp) = parseScreenshotFilePath(file.name)
+            fileTimestamp != null && !ingestedFrames.contains(Pair(fileTimestamp, fileApplication))
+        }
+        val sortedScreenshots = nonIngestedScreenshots.sortedBy { file ->
+            val (_, timestamp) = parseScreenshotFilePath(file.name)
+            timestamp ?: 0L
+        }
+        sortedScreenshots.forEach{ file ->
             if (file.length() > 0) {
                 val (fileApplication, fileTimestamp) = parseScreenshotFilePath(file.name)
                 if (fileTimestamp != null) {
@@ -229,6 +240,9 @@ class IngestScreenshotsService : LifecycleService() {
                 } catch (e: Exception) {
                     Log.e("IngestScreenshotsService", "OCR failed for frameId $frameId", e)
                 }
+            } else {
+                Log.e("IngestScreenshotsService", "Screenshot file not found for frameId $frameId")
+                dbHelper.insertOCRResults(frameId, emptyList())
             }
             delay(200)
         }
@@ -361,14 +375,11 @@ class IngestScreenshotsService : LifecycleService() {
 
     private suspend fun ingestScreenshots() {
         try {
-            val screenshotFiles = getImageFiles(unprocessedScreenshotsDirectory)
-            val sortedScreenshots = screenshotFiles.sortedBy { file ->
-                val (_, timestamp) = parseScreenshotFilePath(file.name)
-                timestamp ?: 0L
-            }
             Log.d("IngestScreenshotsService", "Ingesting screenshots")
-            ingestScreenshotsIntoFrames(sortedScreenshots)
+            ingestScreenshotsIntoFrames()
+            Log.d("IngestScreenshotsService","Running OCR")
             runAllOCR()
+            Log.d("IngestScreenshotsService","Running Embedding")
             embedScreenshots()
             // Only run compression if the screen is off and phone is charging
             if (!RecorderService.screenOn && UserActivityState.phoneCharging) {

@@ -149,6 +149,26 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         return exists
     }
 
+    fun getAllFrameTimestampsAndApplications(): List<Pair<Long, String?>> {
+        val db = this.readableDatabase
+        val frameList = mutableListOf<Pair<Long, String?>>()
+
+        val query = "SELECT $COLUMN_TIMESTAMP, $COLUMN_APPLICATION FROM $TABLE_FRAMES"
+
+        val cursor = db.rawQuery(query, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TIMESTAMP))
+                val application = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_APPLICATION))
+                frameList.add(Pair(timestamp, application))
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        return frameList
+    }
+
     fun insertOCRResults(frameId: Int, results: List<OCRResult>): Long {
         val db = this.writableDatabase
         db.beginTransaction()
