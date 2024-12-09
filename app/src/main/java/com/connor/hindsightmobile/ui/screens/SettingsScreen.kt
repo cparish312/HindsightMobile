@@ -19,6 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.connor.hindsightmobile.MainActivity
+import com.connor.hindsightmobile.ui.elements.DeleteRecentConfirmationDialog
 import com.connor.hindsightmobile.ui.viewmodels.SettingsViewModel
 import com.connor.hindsightmobile.utils.getAppDiskUsage
 import com.connor.hindsightmobile.utils.observeLastIngestTime
@@ -43,6 +48,10 @@ fun SettingsScreen(navController: NavController,
     val numFrames = observeNumFrames(context).collectAsState(initial = 0)
     val diskUsage = getAppDiskUsage(context)
     val lastIngestTime = observeLastIngestTime().collectAsState(initial = "")
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var millisecondsToDelete by remember { mutableStateOf<Long>(0) }
+    var timeToDeleteString by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(key1 = settingsViewModel) {
         settingsViewModel.events.collect { event ->
@@ -169,7 +178,9 @@ fun SettingsScreen(navController: NavController,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
-                        onClick = { settingsViewModel.deleteRecentScreenshots(900000) },
+                        onClick = { showDeleteDialog = true
+                                  millisecondsToDelete = 900000
+                                  timeToDeleteString = "15 Mins"},
                         modifier = Modifier.padding(20.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.onSurface,
@@ -179,7 +190,10 @@ fun SettingsScreen(navController: NavController,
                         Text("15 Mins")
                     }
                     Button(
-                        onClick = { settingsViewModel.deleteRecentScreenshots(1800000) },
+                        onClick = {
+                            showDeleteDialog = true
+                            millisecondsToDelete = 1800000
+                            timeToDeleteString = "30 Mins"},
                         modifier = Modifier.padding(20.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.onSurface,
@@ -189,7 +203,9 @@ fun SettingsScreen(navController: NavController,
                         Text("30 Mins")
                     }
                     Button(
-                        onClick = { settingsViewModel.deleteRecentScreenshots(3600000) },
+                        onClick = { showDeleteDialog = true
+                            millisecondsToDelete = 3600000
+                            timeToDeleteString = "1 Hour"},
                         modifier = Modifier.padding(20.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.onSurface,
@@ -336,5 +352,22 @@ fun SettingsScreen(navController: NavController,
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+    if (showDeleteDialog && timeToDeleteString != null) {
+        DeleteRecentConfirmationDialog(
+            timeString = timeToDeleteString!!,
+            onConfirm = {
+                settingsViewModel.deleteRecentScreenshots(millisecondsToDelete)
+                showDeleteDialog = false
+                millisecondsToDelete = 0
+                timeToDeleteString = null
+            },
+            onDismiss = {
+                showDeleteDialog = false
+                millisecondsToDelete = 0
+                timeToDeleteString = null
+            }
+        )
+
     }
 }

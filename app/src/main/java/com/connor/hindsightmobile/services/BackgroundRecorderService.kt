@@ -211,36 +211,37 @@ class BackgroundRecorderService : RecorderService() {
                         return
                     }
 
-                    imageReader?.let { reader ->
-                        val image = reader.acquireLatestImage()
-                        Log.d("BackgroundRecorderService", "Image Acquired")
-                        image?.let {
-                            val buffer = it.planes[0].buffer
-                            val pixelStride = it.planes[0].pixelStride
-                            val rowStride = it.planes[0].rowStride
+                    try {
+                        imageReader?.let { reader ->
+                            val image = reader.acquireLatestImage()
+                            Log.d("BackgroundRecorderService", "Image Acquired")
+                            image?.let {
+                                val buffer = it.planes[0].buffer
+                                val pixelStride = it.planes[0].pixelStride
+                                val rowStride = it.planes[0].rowStride
 
-                            val offset = (rowStride - pixelStride * width) / pixelStride
-                            val w = width + offset
-                            val bitmap = Bitmap.createBitmap(w, height, Bitmap.Config.ARGB_8888)
-                            bitmap.copyPixelsFromBuffer(buffer)
+                                val offset = (rowStride - pixelStride * width) / pixelStride
+                                val w = width + offset
+                                val bitmap = Bitmap.createBitmap(w, height, Bitmap.Config.ARGB_8888)
+                                bitmap.copyPixelsFromBuffer(buffer)
 
-                            saveImageData(
-                                bitmap,
-                                this@BackgroundRecorderService,
-                                screenshotApplication
-                            )
-                            it.close()
+                                saveImageData(
+                                    bitmap,
+                                    this@BackgroundRecorderService,
+                                    screenshotApplication
+                                )
+                                it.close()
+                            }
+                            // Schedule the next capture
+                            UserActivityState.userActive = false
+                            postRecorderLoop(this)
                         }
-                        // Schedule the next capture
+                    } catch (e: Exception) {
+                        Log.e("BackgroundRecorderService", "Failed to capture image", e)
                         UserActivityState.userActive = false
                         postRecorderLoop(this)
                     }
                 }
-            }
-            loopIterationsSinceAutoIngest += 1
-            if (loopIterationsSinceAutoIngest >= 1000) {
-                loopIterationsSinceAutoIngest = 0
-                runIngest()
             }
             // Initial delay before starting the recurring task
             handler?.postDelayed(recordRunnable!!, 2000) // Start after a delay of 2 seconds
@@ -248,6 +249,11 @@ class BackgroundRecorderService : RecorderService() {
     }
 
     private fun postRecorderLoop(runnable: Runnable) {
+        loopIterationsSinceAutoIngest += 1
+        if (loopIterationsSinceAutoIngest >= 1000) {
+            loopIterationsSinceAutoIngest = 0
+            // runIngest()
+        }
         if (recorderState == RecorderState.ACTIVE) {
             recorderLoopStopped = false
             handler?.postDelayed(runnable, 2000)
@@ -270,7 +276,7 @@ class BackgroundRecorderService : RecorderService() {
             screenShotsSinceAutoIngest += 1
             if (screenShotsSinceAutoIngest >= 100) {
                 screenShotsSinceAutoIngest = 0
-                runIngest()
+                // runIngest()
             }
         } catch (e: IOException) {
             Log.e("BackgroundRecorderService", "Failed to save image", e)

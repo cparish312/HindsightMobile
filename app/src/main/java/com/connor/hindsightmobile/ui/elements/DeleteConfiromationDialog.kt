@@ -29,3 +29,28 @@ fun DeleteConfirmationDialog(
         }
     )
 }
+
+@Composable
+fun DeleteRecentConfirmationDialog(
+    timeString: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text(text = "Delete Data from the last $timeString?") },
+        text = {
+            Text("Are you sure you want to delete all frames and associated data from the last $timeString? This action cannot be undone.")
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
