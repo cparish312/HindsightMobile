@@ -73,8 +73,20 @@ fun formatSize(size: Long): String {
     }
 }
 
-fun getAppDiskUsage(context: Context): String {
-    val appDirs = listOf(
+data class AppDiskUsage(
+    val screenshotDiskUsage: String,
+    val videoDiskUsage: String,
+    val totalDiskUsage: String
+)
+
+fun getAppDiskUsage(context: Context): AppDiskUsage {
+    val screenshotsDir = getUnprocessedScreenshotsDirectory(context)
+    val screenshotsDiskUsage = formatSize(getDirectorySize(screenshotsDir))
+
+    val videoFilesDir = getVideoFilesDirectory(context)
+    val videoDiskUsage = formatSize(getDirectorySize(videoFilesDir))
+
+    val allAppDirs = listOf(
         context.filesDir, // Internal storage files
         context.cacheDir, // Internal storage cache
         context.getExternalFilesDir(null), // External storage files
@@ -82,12 +94,12 @@ fun getAppDiskUsage(context: Context): String {
     )
 
     var totalSize: Long = 0
-    for (dir in appDirs) {
+    for (dir in allAppDirs) {
         if (dir != null && dir.exists()) {
             totalSize += getDirectorySize(dir)
         }
     }
 
-    val formattedSize = formatSize(totalSize)
-    return formattedSize
+    val formattedTotalSize = formatSize(totalSize)
+    return AppDiskUsage(screenshotsDiskUsage, videoDiskUsage, formattedTotalSize)
 }

@@ -34,6 +34,9 @@ fun AppNavigation() {
         composable("manageRecordings"){
             ManageRecordingsScreen(navController)
         }
+        composable("disk_usage"){
+            DiskUsageScreen(navController)
+        }
         composable(
             route = ASSISTANT_PROMPT_SCREEN,
             arguments = listOf(navArgument("message") { type = NavType.StringType })
