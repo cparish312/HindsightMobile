@@ -244,7 +244,7 @@ class IngestScreenshotsService : LifecycleService() {
                 Log.e("IngestScreenshotsService", "Screenshot file not found for frameId $frameId")
                 dbHelper.insertOCRResults(frameId, emptyList())
             }
-            delay(200)
+            delay(500)
         }
     }
 

@@ -14,6 +14,7 @@ object Preferences {
     const val defaultllmname = "DefaultLLMName"
     const val defaultrecordapps = "DefaultRecordApps"
     const val lastingesttimestamp = "LastingestTimestamp"
+    const val locationtrackingenabled = "LocationTrackingEnabled"
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE)
@@ -40,6 +41,10 @@ object Preferences {
 
         if (!prefs.contains(lastingesttimestamp)) {
             prefs.edit().putLong(lastingesttimestamp, 0).apply()
+        }
+
+        if (!prefs.contains(locationtrackingenabled)) {
+            prefs.edit().putBoolean(locationtrackingenabled, false).apply()
         }
     }
 }

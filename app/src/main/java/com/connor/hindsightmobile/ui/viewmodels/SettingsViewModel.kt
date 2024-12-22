@@ -29,6 +29,11 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
     )
     val screenRecordingEnabled = _screenRecordingEnabled.asStateFlow()
 
+    private val _locationTrackingEnabled = MutableStateFlow(
+        Preferences.prefs.getBoolean(Preferences.locationtrackingenabled, false)
+    )
+    val locationTrackingEnabled = _locationTrackingEnabled.asStateFlow()
+
     private val _defaultRecordApps = MutableStateFlow(
         Preferences.prefs.getBoolean(Preferences.defaultrecordapps, false)
     )
@@ -101,6 +106,12 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
                 _eventChannel.send(UIEvent.StopScreenRecording)
             }
         }
+    }
+
+    fun toggleLocationTracking() {
+        _locationTrackingEnabled.value = !_locationTrackingEnabled.value
+        Preferences.prefs.edit().putBoolean(Preferences.locationtrackingenabled, _locationTrackingEnabled.value)
+            .apply()
     }
 
     fun toggleDefaultRecordApps() {

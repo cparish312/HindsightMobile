@@ -13,6 +13,7 @@ lifecycleService = "2.8.6"
 objectboxGradlePlugin = "4.0.3"
 runtimeLivedata = "1.7.5"
 compose-compiler = "1.5.4"
+playServicesLocation = "21.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,6 +36,7 @@ androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-s
 objectbox = { module = "io.objectbox:objectbox-gradle-plugin", version.ref = "objectboxGradlePlugin" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -32,9 +32,14 @@ import com.connor.hindsightmobile.R
 import com.connor.hindsightmobile.enums.RecorderState
 import com.connor.hindsightmobile.obj.ImageResolution
 import com.connor.hindsightmobile.obj.UserActivityState
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.FusedLocationProviderClient
+import android.location.Location
 import com.connor.hindsightmobile.ui.viewmodels.ManageRecordingsViewModel
 import com.connor.hindsightmobile.utils.Preferences
 import com.connor.hindsightmobile.utils.getUnprocessedScreenshotsDirectory
+import com.google.android.gms.tasks.Task
+import java.util.concurrent.Executors
 
 class BackgroundRecorderService : RecorderService() {
     override val notificationTitle: String
@@ -64,6 +69,10 @@ class BackgroundRecorderService : RecorderService() {
         Preferences.defaultrecordapps,
         false
     )
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var lastKnownLatitude: Double? = null
+    private var lastKnownLongitude: Double? = null
 
     override val fgServiceType: Int?
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -107,6 +116,7 @@ class BackgroundRecorderService : RecorderService() {
 
     override fun onCreate() {
         dbHelper = DB.getInstance(this@BackgroundRecorderService)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         appPackageToRecord = dbHelper.getAppPackageToRecordMap()
 
         runCatching {
@@ -187,6 +197,12 @@ class BackgroundRecorderService : RecorderService() {
             handler = Handler(Looper.getMainLooper())
             recordRunnable = object : Runnable {
                 override fun run() {
+                    if (Preferences.prefs.getBoolean(
+                            Preferences.locationtrackingenabled,
+                            false
+                        )) {
+                        addLastKnownLocation()
+                    }
                     if (!screenOn) {
                         Log.d("BackgroundRecorderService", "Screen is off, skipping screenshot")
                         postRecorderLoop(this)
@@ -306,6 +322,7 @@ class BackgroundRecorderService : RecorderService() {
         imageReader?.close()
         virtualDisplay?.release()
         mediaProjection?.stop() // This will trigger the callback's onStop method
+        mediaProjection = null
         runCatching {
             unregisterReceiver(backgroundRecorderBroadcastReceiver)
         }
@@ -317,6 +334,34 @@ class BackgroundRecorderService : RecorderService() {
         // recorderLoopStopped ensures that the previous image capture is stopped
         if (recorderState == RecorderState.ACTIVE && recorderLoopStopped) {
             handler?.postDelayed(recordRunnable!!, 2000)
+        }
+    }
+
+    private fun addLocationToDatabase(latitude: Double, longitude: Double){
+        dbHelper.addLocation(latitude, longitude)
+    }
+
+    private fun addLastKnownLocation() {
+        try {
+            val locationResult: Task<Location> = fusedLocationClient.lastLocation
+            val backgroundExecutor = Executors.newSingleThreadExecutor()
+            locationResult.addOnCompleteListener(backgroundExecutor) { task ->
+                if (task.isSuccessful && task.result != null) {
+                    val lastKnownLocation: Location = task.result!!
+                    if (lastKnownLatitude != lastKnownLocation.latitude ||
+                        lastKnownLongitude != lastKnownLocation.longitude) {
+                        lastKnownLatitude = lastKnownLocation.latitude
+                        lastKnownLongitude = lastKnownLocation.longitude
+                        addLocationToDatabase(lastKnownLatitude!!, lastKnownLongitude!!)
+                    }
+                } else {
+                    Log.d("BackgroundRecorderService",
+                        "No location detected. Make sure location is enabled on the device.")
+                }
+            }
+        } catch (e: SecurityException) {
+            // Handle the exception
+            println("SecurityException: ${e.message}")
         }
     }
 

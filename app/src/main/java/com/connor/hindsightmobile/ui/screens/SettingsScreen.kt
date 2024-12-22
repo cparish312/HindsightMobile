@@ -274,6 +274,33 @@ fun SettingsScreen(navController: NavController,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
+                MarkdownText(
+                    markdown = """
+                    |### Location Tracking
+                    |* Will record your tracked location without making GPS requests itself. Go go location access and enable location tracking for HindsightMobile. Note this only works if Screen Recording is also enabled.
+                    
+                """.trimMargin(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(16.dp)
+
+                )
+
+                Switch(
+                    checked = settingsViewModel.locationTrackingEnabled.collectAsState().value,
+                    onCheckedChange = {
+                        settingsViewModel.toggleLocationTracking()
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = MaterialTheme.colorScheme.primary, // More contrasting color when checked
+                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer, // Visible track when checked
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant, // Thumb color when unchecked
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    modifier = Modifier.padding(start = 25.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 MarkdownText(
                     markdown = """
