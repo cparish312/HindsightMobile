@@ -13,7 +13,7 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
 
      companion object {
          private const val DATABASE_NAME = "hindsight.db"
-         private const val DATABASE_VERSION = 4
+         private const val DATABASE_VERSION = 5
 
          private const val TABLE_FRAMES = "frames"
          const val COLUMN_ID = "id"
@@ -41,6 +41,10 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
          private const val COLUMN_APP_NAME = "name"
          private const val COLUMN_APP_PACKAGE = "package"
          private const val COLUMN_RECORD = "record"
+
+         private const val TABLE_LOCATIONS = "locations"
+         private const val COLUMN_LATITUDE = "latitude"
+         private const val COLUMN_LONGITUDE = "longitude"
 
          @Volatile private var instance: DB? = null
 
@@ -91,10 +95,19 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
             )
         """.trimIndent()
 
+        val createLocationsTable = """
+            CREATE TABLE IF NOT EXISTS $TABLE_LOCATIONS  (
+                $COLUMN_LATITUDE DOUBLE,
+                $COLUMN_LONGITUDE DOUBLE,
+                $COLUMN_TIMESTAMP INTEGER
+            )
+        """.trimIndent()
+
         db.execSQL(createFramesTable)
         db.execSQL(createVideoChunksTable)
         db.execSQL(createOcrResultsTable)
         db.execSQL(createAppsTable)
+        db.execSQL(createLocationsTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -549,5 +562,18 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         } finally {
             db.endTransaction()
         }
+    }
+
+    fun addLocation(latitude: Double, longitude: Double) {
+        val db = this.writableDatabase
+        val currentTimestamp = System.currentTimeMillis()
+        val values = ContentValues().apply {
+            put(COLUMN_LATITUDE, latitude)
+            put(COLUMN_LONGITUDE, longitude)
+            put(COLUMN_TIMESTAMP, currentTimestamp)
+        }
+        db.insert(TABLE_LOCATIONS, null, values)
+        Log.d("DB", "Location added: $latitude, $longitude")
+        db.close()
     }
 }

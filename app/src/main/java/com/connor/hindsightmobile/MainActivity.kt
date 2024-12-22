@@ -1,6 +1,5 @@
 package com.connor.hindsightmobile
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -20,13 +19,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.connor.hindsightmobile.models.RecorderModel
+import com.connor.hindsightmobile.models.RecorderModel.Companion.SCREEN_RECORDER_PERMISSION_DENIED
 import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.services.RecorderService
 import com.connor.hindsightmobile.services.BackgroundRecorderService
 import com.connor.hindsightmobile.ui.screens.AppNavigation
 import com.connor.hindsightmobile.ui.theme.HindsightMobileTheme
 import com.connor.hindsightmobile.utils.Preferences
-
 
 class MainActivity : ComponentActivity() {
     private lateinit var mediaProjectionManager: MediaProjectionManager
@@ -51,6 +50,7 @@ class MainActivity : ComponentActivity() {
                 recorderModel.startVideoRecorder(this, result)
             } else {
                 Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
+                this@MainActivity.sendBroadcast(Intent(SCREEN_RECORDER_PERMISSION_DENIED))
             }
         }
 
