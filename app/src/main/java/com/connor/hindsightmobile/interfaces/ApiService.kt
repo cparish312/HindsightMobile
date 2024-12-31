@@ -13,16 +13,20 @@ interface ApiService {
     @GET("get_last_timestamp")
     suspend fun getLastTimestamp(@Query("table") tableName: String): Response<TimestampResponse>
 
-    @POST("add_frames")
-    suspend fun syncDB(@Body addFramesData: AddFramesData): Response<ResponseBody>
+    @GET("get_last_frame_id")
+    suspend fun getLastFrameId(@Query("source") source: String): Response<FrameIdResponse>
+
+    @POST("sync_db")
+    suspend fun syncDB(@Body syncDBDate: syncDBData): Response<ResponseBody>
 
     @GET("ping")
     fun pingServer(): Call<ResponseBody>
 }
 
-data class AddFramesData(
+data class syncDBData(
+    val source: String,
     val frames: List<Frame>,
-    val source: String = "hindsightmobile",
+    val locations: List<Location>,
 )
 
 data class Frame(
@@ -32,6 +36,16 @@ data class Frame(
     val ocr_results: List<OCRResult>,
 )
 
+data class Location(
+    val latitude: Double,
+    val longitude: Double,
+    val timestamp: Long
+)
+
 data class TimestampResponse(
     val last_timestamp: Long?
+)
+
+data class FrameIdResponse(
+    val last_frame_id: Int?
 )

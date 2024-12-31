@@ -145,6 +145,47 @@ fun SettingsScreen(navController: NavController,
                     }
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                MarkdownText(
+                    markdown = """
+                    |### Server Upload
+                    |* Uploads OCR results to computer server.
+                    
+                """.trimMargin(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(16.dp)
+
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = {
+                            if (context is MainActivity) {
+                                context.uploadToServer()
+                            }
+                        },
+                        modifier = Modifier.padding(25.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onSurface,
+                            contentColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Text("Server Upload")
+                    }
+                    if (settingsViewModel.isUploading.collectAsState().value) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 MarkdownText(
                     markdown = """
                     ### Manage Recordings
