@@ -106,4 +106,9 @@ class ContextRetriever(context : Context){
             continuation.resume(QueryResults(contextString, retrievedContextList))
         }
     }
+
+    fun release() {
+        sentenceEncoder.close()
+        dbHelper.close()
+    }
 }

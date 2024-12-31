@@ -54,7 +54,7 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
     private val downloadManager: DownloadManager by lazy {
         app.getSystemService(DOWNLOAD_SERVICE) as DownloadManager
     }
-    private val contextRetriever: ContextRetriever = ContextRetriever(app)
+    private lateinit var contextRetriever: ContextRetriever
     private val _ingestionRunning = IngestScreenshotsService.isRunning
 
     val isGenerating: LiveData<Boolean> = _isGenerating
@@ -130,7 +130,13 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
         generatingJob?.cancel()
         viewModelScope.launch {
             llamaModel?.unloadModel()
+            generatingJob?.cancel()
+            generatingJob = null
+            llamaSession?.destroy()
+            llamaSession = null
+            contextRetriever?.release()
         }
+
         app.unregisterReceiver(downloadReceiver)
         super.onCleared()
     }
@@ -207,6 +213,8 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
             )
         )
 
+        contextRetriever = ContextRetriever(app)
+
         viewModelScope.launch {
 
             val personalContext = withContext(Dispatchers.IO) {
@@ -220,6 +228,7 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
             } else {
                 "${personalContext.contextString} \n Only using the context above, answer the question: ${message.content}"
             }
+
             uiState.addPromptToLastMessage(messageWithContext)
 
             val antiPrompt = _loadedModel.value?.antiPrompt

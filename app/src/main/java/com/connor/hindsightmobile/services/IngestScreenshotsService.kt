@@ -10,6 +10,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -244,7 +245,7 @@ class IngestScreenshotsService : LifecycleService() {
                 Log.e("IngestScreenshotsService", "Screenshot file not found for frameId $frameId")
                 dbHelper.insertOCRResults(frameId, emptyList())
             }
-            delay(500)
+            delay(250)
         }
     }
 
@@ -442,6 +443,9 @@ class IngestScreenshotsService : LifecycleService() {
         sendBroadcast(Intent(INGEST_SCREENSHOTS_FINISHED))
         stopIngest = true
         isRunning.value = false
+
+        NotificationManagerCompat.from(this)
+            .cancel(NotificationHelper.INGEST_SCREENSHOTS_NOTIFICATION_ID)
 
         lifecycleScope.launch {
             runCatching {
