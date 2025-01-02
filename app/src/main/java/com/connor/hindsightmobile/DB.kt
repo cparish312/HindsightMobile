@@ -2,7 +2,6 @@ package com.connor.hindsightmobile
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
@@ -16,7 +15,7 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
 
      companion object {
          private const val DATABASE_NAME = "hindsight.db"
-         private const val DATABASE_VERSION = 5
+         private const val DATABASE_VERSION = 6
 
          private const val TABLE_FRAMES = "frames"
          const val COLUMN_ID = "id"
@@ -65,7 +64,8 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
             $COLUMN_APPLICATION TEXT,
             $COLUMN_VIDEO_CHUNK INTEGER,
             $COLUMN_VIDEO_CHUNK_OFFSET INTEGER,
-            FOREIGN KEY($COLUMN_VIDEO_CHUNK) REFERENCES $TABLE_VIDEO_CHUNKS($COLUMN_VIDEO_CHUNK_ID)
+            FOREIGN KEY($COLUMN_VIDEO_CHUNK) REFERENCES $TABLE_VIDEO_CHUNKS($COLUMN_VIDEO_CHUNK_ID),
+            UNIQUE ($COLUMN_TIMESTAMP, $COLUMN_APPLICATION) ON CONFLICT IGNORE
             )
         """.trimIndent()
 
