@@ -25,8 +25,8 @@ interface ApiService {
 
 data class syncDBData(
     val source: String,
-    val frames: List<Frame>,
-    val locations: List<Location>,
+    val frames: List<Frame> = emptyList(),
+    val locations: List<Location> = emptyList(),
 )
 
 data class Frame(

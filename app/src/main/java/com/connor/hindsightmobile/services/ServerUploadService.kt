@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 
 class ServerUploadService : LifecycleService() {
     val notificationTitle: String = "HindsightMobile Server Upload"
+    val framesUploadLimit: Int = 10000
     private var stopUpload: Boolean = false
     val sourceName = Preferences.prefs.getString(
         Preferences.sourcename, "hindsightmobile"
@@ -133,11 +134,26 @@ class ServerUploadService : LifecycleService() {
         }
     }
 
+    private suspend fun syncWithServer(client: ApiService, syncData: syncDBData){
+        try {
+            val response = client.syncDB(syncData)
+            if (response.isSuccessful) {
+                Log.d("ServerUploadService", "DB Sync successful")
+            } else {
+                Log.e("ServerUploadService", "DB Sync failed: ${response.errorBody()?.string()}")
+                onDestroy()
+            }
+        } catch (e: Exception) {
+            Log.e("ServerUploadService", "Network call failed with exception: ${e.message}")
+            onDestroy()
+        }
+    }
+
     private suspend fun syncDatabase() {
 
-        val lastFrameId = getLastFrameId()
+        var lastFrameId = getLastFrameId()
         Log.d("ServerUploadService", "Last synced Frame Id: $lastFrameId")
-        val syncFrames = dbHelper.getNewFramesAndOCR(lastFrameId)
+        var syncFrames = dbHelper.getNewFramesAndOCR(lastFrameId, framesUploadLimit)
         Log.d("ServerUploadService", "Sync frames: ${syncFrames.size}")
 
         val lastLocationsTimestamp = getLastTimestamp("locations")
@@ -150,17 +166,17 @@ class ServerUploadService : LifecycleService() {
         ).toString()
         val retrofit = RetrofitClient.getInstance(serverUrl, numTries = 3)
         val client = retrofit.create(ApiService::class.java)
-        val syncData = syncDBData(sourceName, syncFrames, syncLocations)
+        var syncData = syncDBData(sourceName, syncFrames, syncLocations)
 
-        try {
-            val response = client.syncDB(syncData)
-            if (response.isSuccessful) {
-                Log.d("ServerUploadService", "DB Sync successful")
-            } else {
-                Log.e("ServerUploadService", "DB Sync failed: ${response.errorBody()?.string()}")
-            }
-        } catch (e: Exception) {
-            Log.e("ServerUploadService", "Network call failed with exception: ${e.message}")
+        syncWithServer(client, syncData)
+
+        while (syncFrames.size == framesUploadLimit) {
+            lastFrameId = syncFrames.lastOrNull()?.id
+            Log.d("ServerUploadService", "Last synced Frame Id: $lastFrameId")
+            syncFrames = dbHelper.getNewFramesAndOCR(lastFrameId, framesUploadLimit)
+            Log.d("ServerUploadService", "Sync frames: ${syncFrames.size}")
+            syncData = syncDBData(sourceName, syncFrames)
+            syncWithServer(client, syncData)
         }
         onDestroy()
     }
