@@ -249,22 +249,53 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         return framesWithoutOCR
     }
 
-    fun getFramesWithOCRResultsNotIn(ingestedFrameIds: List<Int>): List<Map<String, Any?>> {
+    fun getFrameIdsWithEmptyOCR(): List<Int> {
+        val db = this.readableDatabase
+        val frameIds = mutableListOf<Int>()
+
+        val query = """
+        SELECT o.$COLUMN_OCR_RESULT_FRAME_ID
+        FROM $TABLE_OCR_RESULTS o
+        GROUP BY o.$COLUMN_OCR_RESULT_FRAME_ID
+        HAVING COUNT(o.$COLUMN_ID) = SUM(CASE WHEN o.$COLUMN_OCR_RESULT_TEXT = '' THEN 1 ELSE 0 END)
+    """.trimIndent()
+
+        val cursor = db.rawQuery(query, null)
+
+        if (cursor.moveToFirst()) {
+            do {
+                frameIds.add(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_OCR_RESULT_FRAME_ID)))
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        return frameIds
+    }
+
+    fun getFramesWithOCRResultsNotIn(ingestedFrameIds: List<Int>, limit: Int = 10000): List<Map<String, Any?>> {
         val db = this.readableDatabase
         val framesWithOCRResults = mutableListOf<Map<String, Any?>>()
 
-        val ingestedFrameIdsString = ingestedFrameIds.joinToString(",") { "'$it'" }
+        val emptyOCRFrameIds = getFrameIdsWithEmptyOCR()
+        val combinedFrameIds = (ingestedFrameIds + emptyOCRFrameIds).distinct()
+
+        val combinedFrameIdsString = combinedFrameIds.joinToString(",") { "'$it'" }
 
         val query = """
-        SELECT f.$COLUMN_ID, f.$COLUMN_TIMESTAMP, f.$COLUMN_APPLICATION,
-               o.$COLUMN_OCR_RESULT_TEXT, o.$COLUMN_OCR_RESULT_X, o.$COLUMN_OCR_RESULT_Y, 
-               o.$COLUMN_OCR_RESULT_WIDTH, o.$COLUMN_OCR_RESULT_HEIGHT, 
-               o.$COLUMN_OCR_RESULT_CONFIDENCE, o.$COLUMN_OCR_RESULT_BLOCK_NUM
-        FROM $TABLE_FRAMES f
-        INNER JOIN $TABLE_OCR_RESULTS o ON f.$COLUMN_ID = o.$COLUMN_OCR_RESULT_FRAME_ID
-        WHERE o.$COLUMN_OCR_RESULT_TEXT IS NOT NULL
-        AND f.$COLUMN_ID NOT IN ($ingestedFrameIdsString)
-    """.trimIndent()
+            WITH TopFrames AS (
+                SELECT f.$COLUMN_ID, f.$COLUMN_TIMESTAMP, f.$COLUMN_APPLICATION
+                FROM $TABLE_FRAMES f
+                WHERE f.$COLUMN_ID NOT IN ($combinedFrameIdsString)
+                ORDER BY f.$COLUMN_TIMESTAMP ASC
+                LIMIT $limit
+            )
+            SELECT tf.$COLUMN_ID, tf.$COLUMN_TIMESTAMP, tf.$COLUMN_APPLICATION,
+                   o.$COLUMN_OCR_RESULT_TEXT, o.$COLUMN_OCR_RESULT_X, o.$COLUMN_OCR_RESULT_Y, 
+                   o.$COLUMN_OCR_RESULT_WIDTH, o.$COLUMN_OCR_RESULT_HEIGHT, 
+                   o.$COLUMN_OCR_RESULT_CONFIDENCE, o.$COLUMN_OCR_RESULT_BLOCK_NUM
+            FROM TopFrames tf
+            INNER JOIN $TABLE_OCR_RESULTS o ON tf.$COLUMN_ID = o.$COLUMN_OCR_RESULT_FRAME_ID
+        """.trimIndent()
 
         val cursor = db.rawQuery(query, null)
 

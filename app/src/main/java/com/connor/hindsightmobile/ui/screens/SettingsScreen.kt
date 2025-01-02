@@ -46,7 +46,6 @@ fun SettingsScreen(navController: NavController,
     val context = LocalContext.current
 
     val numFrames = observeNumFrames(context).collectAsState(initial = 0)
-    val appDiskUsage = getAppDiskUsage(context)
     val lastIngestTime = observeLastIngestTime().collectAsState(initial = "")
 
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -94,8 +93,8 @@ fun SettingsScreen(navController: NavController,
                     markdown = """
                         | ## Stats
                         | ### Total Ingested Frames: ${numFrames.value}
-                        | ### [Disk Usage: ${appDiskUsage.totalDiskUsage}](diskUsage)
                         | ### Last Ingest: ${lastIngestTime.value}
+                        | ### [Disk Usage](diskUsage)
                     """.trimMargin(),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,

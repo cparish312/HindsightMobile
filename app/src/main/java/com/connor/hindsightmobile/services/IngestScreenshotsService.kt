@@ -258,26 +258,29 @@ class IngestScreenshotsService : LifecycleService() {
     }
 
     private suspend fun embedScreenshots() {
-        val ingestedFrameIdsArray: IntArray? = framesBox.query()
+        while (true) {
+            val ingestedFrameIdsArray: IntArray? = framesBox.query()
                 .build()
                 .property(ObjectBoxFrame_.frameId)
                 .findInts()
 
-        val ingestedFrameIds = ingestedFrameIdsArray?.toList() ?: emptyList()
-        val framesWithOCR = dbHelper.getFramesWithOCRResultsNotIn(ingestedFrameIds)
-        Log.d("IngestScreenshotsService", "Running embedding on ${framesWithOCR.size} frames")
-        val sentenceEncoder = SentenceEmbeddingProvider(this@IngestScreenshotsService)
+            val ingestedFrameIds = ingestedFrameIdsArray?.toList() ?: emptyList()
+            val framesWithOCR = dbHelper.getFramesWithOCRResultsNotIn(ingestedFrameIds, 1000)
+            if (framesWithOCR.isEmpty()) break // Runs in batches of 1000
+            Log.d("IngestScreenshotsService", "Running embedding on ${framesWithOCR.size} frames")
+            val sentenceEncoder = SentenceEmbeddingProvider(this@IngestScreenshotsService)
 
-        for (frame in framesWithOCR) {
-            val frameId = frame["frame_id"] as Int
-            val timestamp = frame["timestamp"] as Long
-            val ocrResults = frame["ocr_results"] as List<Map<String, Any?>>
-            val application = frame["application"] as String
+            for (frame in framesWithOCR) {
+                val frameId = frame["frame_id"] as Int
+                val timestamp = frame["timestamp"] as Long
+                val ocrResults = frame["ocr_results"] as List<Map<String, Any?>>
+                val application = frame["application"] as String
 
-            val combinedOCR = processOCRResultsIngest(ocrResults, application)
+                val combinedOCR = processOCRResultsIngest(ocrResults, application)
 
-            embedScreenshot(frameId, timestamp, application, combinedOCR, sentenceEncoder)
-            delay(100)
+                embedScreenshot(frameId, timestamp, application, combinedOCR, sentenceEncoder)
+                delay(100)
+            }
         }
     }
 
