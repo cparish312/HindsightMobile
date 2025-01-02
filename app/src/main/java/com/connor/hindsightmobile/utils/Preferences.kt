@@ -17,6 +17,7 @@ object Preferences {
     const val locationtrackingenabled = "LocationTrackingEnabled"
     const val apikey = "ApiKey"
     const val interneturl = "InternetUrl"
+    const val sourcename = "SourceName"
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE)
@@ -55,6 +56,10 @@ object Preferences {
 
         if (!prefs.contains(interneturl)) {
             prefs.edit().putString(interneturl, "").apply()
+        }
+
+        if (!prefs.contains(sourcename)) {
+            prefs.edit().putString(sourcename, "hindsightmobile").apply()
         }
     }
 }
