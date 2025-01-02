@@ -34,8 +34,11 @@ fun AppNavigation() {
         composable("manageRecordings"){
             ManageRecordingsScreen(navController)
         }
-        composable("disk_usage"){
+        composable("diskUsage"){
             DiskUsageScreen(navController)
+        }
+        composable("serverUpload"){
+            ServerUploadScreen(navController)
         }
         composable(
             route = ASSISTANT_PROMPT_SCREEN,

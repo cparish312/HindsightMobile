@@ -7,13 +7,15 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.connor.hindsightmobile.obj.OCRResult
 import com.connor.hindsightmobile.ui.elements.AppInfo
+import com.connor.hindsightmobile.interfaces.Frame
+import com.connor.hindsightmobile.interfaces.Location
 
 class DB private constructor(context: Context, databaseName: String = DATABASE_NAME) :
     SQLiteOpenHelper(context, databaseName, null, DATABASE_VERSION) {
 
      companion object {
          private const val DATABASE_NAME = "hindsight.db"
-         private const val DATABASE_VERSION = 5
+         private const val DATABASE_VERSION = 6
 
          private const val TABLE_FRAMES = "frames"
          const val COLUMN_ID = "id"
@@ -62,7 +64,8 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
             $COLUMN_APPLICATION TEXT,
             $COLUMN_VIDEO_CHUNK INTEGER,
             $COLUMN_VIDEO_CHUNK_OFFSET INTEGER,
-            FOREIGN KEY($COLUMN_VIDEO_CHUNK) REFERENCES $TABLE_VIDEO_CHUNKS($COLUMN_VIDEO_CHUNK_ID)
+            FOREIGN KEY($COLUMN_VIDEO_CHUNK) REFERENCES $TABLE_VIDEO_CHUNKS($COLUMN_VIDEO_CHUNK_ID),
+            UNIQUE ($COLUMN_TIMESTAMP, $COLUMN_APPLICATION) ON CONFLICT IGNORE
             )
         """.trimIndent()
 
@@ -368,6 +371,73 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         return framesWithOCRResults
     }
 
+    fun getNewFramesAndOCR(lastFrameId: Int? = -1, limit: Int = 10000): List<Frame> {
+        val db = this.readableDatabase
+        val newFrames = mutableListOf<Frame>()
+
+        val effectiveLastFrameId = lastFrameId ?: -1
+
+        val query = """
+            WITH LimitedFrames AS (
+                SELECT f.$COLUMN_ID, f.$COLUMN_TIMESTAMP, f.$COLUMN_APPLICATION
+                FROM $TABLE_FRAMES f
+                WHERE f.$COLUMN_ID > ?
+                ORDER BY f.$COLUMN_ID ASC
+                LIMIT ?
+            )
+            SELECT lf.$COLUMN_ID, lf.$COLUMN_TIMESTAMP, lf.$COLUMN_APPLICATION,
+                   o.$COLUMN_OCR_RESULT_TEXT, o.$COLUMN_OCR_RESULT_X, o.$COLUMN_OCR_RESULT_Y, 
+                   o.$COLUMN_OCR_RESULT_WIDTH, o.$COLUMN_OCR_RESULT_HEIGHT, 
+                   o.$COLUMN_OCR_RESULT_CONFIDENCE, o.$COLUMN_OCR_RESULT_BLOCK_NUM
+            FROM LimitedFrames lf
+            INNER JOIN $TABLE_OCR_RESULTS o ON lf.$COLUMN_ID = o.$COLUMN_OCR_RESULT_FRAME_ID
+        """.trimIndent()
+
+        val cursor = db.rawQuery(query, arrayOf(effectiveLastFrameId.toString(), limit.toString()))
+
+        val framesMap = mutableMapOf<Int, Pair<Pair<Long, String?>, MutableList<OCRResult>>>()
+
+        if (cursor.moveToFirst()) {
+            do {
+                val frameId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID))
+                val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TIMESTAMP))
+                val application = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_APPLICATION))
+
+                val ocrResult = OCRResult(
+                    text = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_OCR_RESULT_TEXT)) ?: "",
+                    x = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_OCR_RESULT_X)),
+                    y = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_OCR_RESULT_Y)),
+                    width = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_OCR_RESULT_WIDTH)),
+                    height = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_OCR_RESULT_HEIGHT)),
+                    confidence = cursor.getFloat(cursor.getColumnIndexOrThrow(COLUMN_OCR_RESULT_CONFIDENCE)),
+                    blockNum = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_OCR_RESULT_BLOCK_NUM))
+                )
+
+                val frame = framesMap.getOrPut(frameId) {
+                    Pair(timestamp, application) to mutableListOf<OCRResult>()
+                }
+                frame.second.add(ocrResult)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+
+        framesMap.forEach { (frameId, pair) ->
+            val (timestamp, application) = pair.first
+            val ocrResults = pair.second
+            newFrames.add(
+                Frame(
+                    id = frameId,
+                    timestamp = timestamp,
+                    application = application ?: "",
+                    ocr_results = ocrResults
+                )
+            )
+        }
+
+        return newFrames
+    }
+
     fun insertVideoChunk(videoPath: String): Long {
         val db = this.writableDatabase
         val values = ContentValues().apply {
@@ -575,5 +645,24 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         db.insert(TABLE_LOCATIONS, null, values)
         Log.d("DB", "Location added: $latitude, $longitude")
         db.close()
+    }
+
+    fun getLocations(afterTimestamp: Long? = 0): List<Location> {
+        val db = this.readableDatabase
+        val timestamp = afterTimestamp ?: 0
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_LOCATIONS WHERE " +
+                "$COLUMN_TIMESTAMP > $timestamp ORDER BY $COLUMN_TIMESTAMP DESC", null)
+
+        val locations = mutableListOf<Location>()
+        if (cursor.moveToFirst()) {
+            do {
+                val latitude = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_LATITUDE))
+                val longitude = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_LONGITUDE))
+                val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TIMESTAMP))
+                locations.add(Location(latitude, longitude, timestamp))
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return locations
     }
 }

@@ -30,7 +30,7 @@ class App : Application() {
 
     // Not sure why the log file doesn't seem to get created
     private fun logCrashToFile(throwable: Throwable) {
-        Log.d("App", "Logging crash to file")
+        // Log.d("App", "Logging crash to file")
         try {
             val logFile = File(getExternalFilesDir(null), "crash_logs.txt")
             val logWriter = PrintWriter(FileOutputStream(logFile, true))

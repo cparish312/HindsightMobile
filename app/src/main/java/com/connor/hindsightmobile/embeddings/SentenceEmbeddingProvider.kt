@@ -36,4 +36,8 @@ class SentenceEmbeddingProvider(private val context: Context) {
         initCompleted.await()
         sentenceEmbedding.encode(text)
     }
+
+    fun close() {
+        sentenceEmbedding.close()
+    }
 }

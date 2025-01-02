@@ -23,9 +23,12 @@ import com.connor.hindsightmobile.models.RecorderModel.Companion.SCREEN_RECORDER
 import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.services.RecorderService
 import com.connor.hindsightmobile.services.BackgroundRecorderService
+import com.connor.hindsightmobile.services.ServerUploadService
 import com.connor.hindsightmobile.ui.screens.AppNavigation
 import com.connor.hindsightmobile.ui.theme.HindsightMobileTheme
 import com.connor.hindsightmobile.utils.Preferences
+import com.connor.hindsightmobile.utils.ServerConnectionCallback
+import com.connor.hindsightmobile.utils.checkServerConnection
 
 class MainActivity : ComponentActivity() {
     private lateinit var mediaProjectionManager: MediaProjectionManager
@@ -95,6 +98,36 @@ class MainActivity : ComponentActivity() {
         }
         val ingestIntent = Intent(this@MainActivity, IngestScreenshotsService::class.java)
         ContextCompat.startForegroundService(this@MainActivity, ingestIntent)
+    }
+
+    fun uploadToServer() {
+        Log.d("MainActivity", "uploadToServer")
+        if (ServerUploadService.isRunning.value) {
+            Log.d(
+                "MainActivity",
+                "Ran uploadToServer but ServerUploadService is running"
+            )
+            return
+        }
+        val primaryUrl: String = Preferences.prefs.getString(
+            Preferences.interneturl,
+            ""
+        ).toString()
+
+        checkServerConnection(serverUrl = primaryUrl, object : ServerConnectionCallback {
+            override fun onServerStatusChecked(isConnected: Boolean) {
+                if (isConnected) {
+                    Log.d(
+                        "MainActivity",
+                        "Connection successful, proceeding with service initialization."
+                    )
+                    val uploadIntent = Intent(this@MainActivity, ServerUploadService::class.java)
+                    ContextCompat.startForegroundService(this@MainActivity, uploadIntent)
+                } else {
+                    Log.d("MainActivity", "No server connection, aborting upload.")
+                }
+            }
+        })
     }
 }
 

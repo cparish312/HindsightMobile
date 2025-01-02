@@ -94,15 +94,15 @@ fun SettingsScreen(navController: NavController,
                     markdown = """
                         | ## Stats
                         | ### Total Ingested Frames: ${numFrames.value}
-                        | ### [Disk Usage: ${appDiskUsage.totalDiskUsage}](disk_usage)
+                        | ### [Disk Usage: ${appDiskUsage.totalDiskUsage}](diskUsage)
                         | ### Last Ingest: ${lastIngestTime.value}
                     """.trimMargin(),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,
                     modifier = Modifier.padding(16.dp),
                     onLinkClicked = {link ->
-                        if (link == "disk_usage") {
-                            navController.navigate("disk_usage")
+                        if (link == "diskUsage") {
+                            navController.navigate("diskUsage")
                         }
                     }
                 )
@@ -144,6 +144,8 @@ fun SettingsScreen(navController: NavController,
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 MarkdownText(
                     markdown = """
@@ -243,6 +245,30 @@ fun SettingsScreen(navController: NavController,
                     )
                 ) {
                     Text("Chat")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                MarkdownText(
+                    markdown = """
+                    ### Server Upload
+                    * Navigate to server upload, set up server and upload data to personal server.
+                    
+                """.trimIndent(),
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp,
+                )
+
+                Button(
+                    onClick = { navController.navigate("serverUpload") },
+                    modifier = Modifier.padding(25.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onSurface,
+                        contentColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Text("Server Upload")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

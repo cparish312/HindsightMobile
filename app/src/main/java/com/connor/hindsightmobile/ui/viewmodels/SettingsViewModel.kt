@@ -13,6 +13,7 @@ import com.connor.hindsightmobile.DB
 import com.connor.hindsightmobile.models.RecorderModel
 import com.connor.hindsightmobile.services.BackgroundRecorderService
 import com.connor.hindsightmobile.services.IngestScreenshotsService
+import com.connor.hindsightmobile.services.ServerUploadService
 import com.connor.hindsightmobile.utils.Preferences
 import com.connor.hindsightmobile.utils.deleteRecentScreenshotsData
 import kotlinx.coroutines.channels.Channel
@@ -50,6 +51,8 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
     val autoIngestWhenNotCharging = _autoIngestWhenNotCharging.asStateFlow()
 
     val isIngesting = IngestScreenshotsService.isRunning.asStateFlow()
+
+    val isUploading = ServerUploadService.isRunning.asStateFlow()
 
     private val _eventChannel = Channel<UIEvent>()
     val events = _eventChannel.receiveAsFlow()
