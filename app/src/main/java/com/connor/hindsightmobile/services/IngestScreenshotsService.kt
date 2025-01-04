@@ -313,7 +313,6 @@ class IngestScreenshotsService : LifecycleService() {
             }
         }
 
-        // In case the compression was interrupted
         if (outputFile.exists()) {
             outputFile.delete()
         }
@@ -335,6 +334,9 @@ class IngestScreenshotsService : LifecycleService() {
                     }
                 }
             } else {
+                if (outputFile.exists()) {
+                    outputFile.delete()
+                }
                 Log.e("IngestScreenshotsService", "Error creating video: ${session.returnCode}")
             }
         }
@@ -371,7 +373,6 @@ class IngestScreenshotsService : LifecycleService() {
                 if (!RecorderService.screenOn) {
                     createVideoFromScreenshots(sortedScreenshots, videoFile)
                 }
-                createVideoFromScreenshots(sortedScreenshots, videoFile)
             }
         }
         Log.d("IngestScreenshotsService", "Compression into videos completed")
