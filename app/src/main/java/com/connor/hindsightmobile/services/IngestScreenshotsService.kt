@@ -40,8 +40,11 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import io.objectbox.Box
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.BufferedWriter
@@ -52,7 +55,6 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 import java.util.TimeZone
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -62,6 +64,9 @@ class IngestScreenshotsService : LifecycleService() {
     private lateinit var videoFilesDirectory: File
     private lateinit var dbHelper: DB
     private var stopIngest: Boolean = false
+
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     private val isTest = false
 
@@ -123,9 +128,14 @@ class IngestScreenshotsService : LifecycleService() {
             ContextCompat.RECEIVER_EXPORTED
         )
 
-        lifecycleScope.launch(Dispatchers.IO) {
+//        lifecycleScope.launch(Dispatchers.IO) {
+//            initializeResources()
+//            ingestScreenshots()
+//            onDestroy()
+//        }
+        serviceScope.launch {
             initializeResources()
-            ingestScreenshots()
+            ingestScreenshots(this)
             onDestroy()
         }
 
@@ -302,7 +312,8 @@ class IngestScreenshotsService : LifecycleService() {
         }
     }
 
-    private fun createVideoFromScreenshots(screenshotFiles: List<File>, outputFile: File) {
+    private fun createVideoFromScreenshots(scope: CoroutineScope, screenshotFiles: List<File>, outputFile: File) {
+        if (!scope.isActive) return
         Log.d("IngestScreenshotsService", "Compressing ${screenshotFiles.size} screenshots into $outputFile")
         // Create a temporary text file listing all screenshot file paths
         val fileList = File(cacheDir, "screenshot_list.txt")
@@ -321,6 +332,7 @@ class IngestScreenshotsService : LifecycleService() {
 
         FFmpegKit.execute(ffmpegCommand).also { session ->
             if (ReturnCode.isSuccess(session.getReturnCode())) {
+                if (!scope.isActive) return
                 Log.d("IngestScreenshotsService", "Video created successfully: ${outputFile.path}")
                 addVideoChunkToDatabase(screenshotFiles, outputFile)
 
@@ -345,7 +357,8 @@ class IngestScreenshotsService : LifecycleService() {
         fileList.delete()
     }
 
-    private suspend fun compressScreenshotsIntoVideos() {
+    private suspend fun compressScreenshotsIntoVideos(scope: CoroutineScope) {
+        if (!scope.isActive) return
         val dateFormatter = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).apply {
             timeZone = TimeZone.getTimeZone("UTC")
         }
@@ -361,6 +374,7 @@ class IngestScreenshotsService : LifecycleService() {
             val (date, application) = dateAppPair
 
             if (date < today && screenshotFiles.isNotEmpty()) { // Don't run on screenshots from today
+                if (!scope.isActive) return@forEach
                 // Sort screenshots by timestamp to ensure chronological order
                 val sortedScreenshots = screenshotFiles.sortedBy { file ->
                     val (_, timestamp) = parseScreenshotFilePath(file.name)
@@ -371,14 +385,14 @@ class IngestScreenshotsService : LifecycleService() {
                 val videoFile = File(videoFilesDirectory, "${applicationDashes}_$date.mp4")
                 // Stop Running compression if the screen is on
                 if (!RecorderService.screenOn) {
-                    createVideoFromScreenshots(sortedScreenshots, videoFile)
+                    createVideoFromScreenshots(scope, sortedScreenshots, videoFile)
                 }
             }
         }
         Log.d("IngestScreenshotsService", "Compression into videos completed")
     }
 
-    private suspend fun ingestScreenshots() {
+    private suspend fun ingestScreenshots(scope: CoroutineScope) {
         try {
             Log.d("IngestScreenshotsService", "Ingesting screenshots")
             ingestScreenshotsIntoFrames()
@@ -388,7 +402,7 @@ class IngestScreenshotsService : LifecycleService() {
             embedScreenshots()
             // Only run compression if the screen is off and phone is charging
             if (!RecorderService.screenOn && UserActivityState.phoneCharging) {
-                compressScreenshotsIntoVideos()
+                compressScreenshotsIntoVideos(scope)
             }
 
             val currentTimestamp = System.currentTimeMillis()
@@ -444,6 +458,7 @@ class IngestScreenshotsService : LifecycleService() {
 
     override fun onDestroy() {
         Log.d("IngestScreenshotsService", "onDestroy")
+        serviceJob.cancel()
         sendBroadcast(Intent(INGEST_SCREENSHOTS_FINISHED))
         stopIngest = true
         isRunning.value = false
