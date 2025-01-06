@@ -9,13 +9,14 @@ import com.connor.hindsightmobile.obj.OCRResult
 import com.connor.hindsightmobile.ui.elements.AppInfo
 import com.connor.hindsightmobile.interfaces.Frame
 import com.connor.hindsightmobile.interfaces.Location
+import com.connor.hindsightmobile.ui.viewmodels.Message
 
 class DB private constructor(context: Context, databaseName: String = DATABASE_NAME) :
     SQLiteOpenHelper(context, databaseName, null, DATABASE_VERSION) {
 
      companion object {
          private const val DATABASE_NAME = "hindsight.db"
-         private const val DATABASE_VERSION = 6
+         private const val DATABASE_VERSION = 7
 
          private const val TABLE_FRAMES = "frames"
          const val COLUMN_ID = "id"
@@ -47,6 +48,13 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
          private const val TABLE_LOCATIONS = "locations"
          private const val COLUMN_LATITUDE = "latitude"
          private const val COLUMN_LONGITUDE = "longitude"
+
+         private const val TABLE_MESSAGES = "messages"
+         private const val COLUMN_MESSAGES_ID = "id"
+         private const val COLUMN_MESSAGES_CONTENT = "content"
+         private const val COLUMN_MESSAGES_AUTHOR = "author"
+         private const val COLUMN_MESSAGES_PROMPT = "prompt"
+         private const val COLUMN_MESSAGES_MODEL_NAME = "model_name"
 
          @Volatile private var instance: DB? = null
 
@@ -106,11 +114,23 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
             )
         """.trimIndent()
 
+        val createMessagesTable = """
+            CREATE TABLE IF NOT EXISTS $TABLE_MESSAGES (
+                $COLUMN_MESSAGES_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_MESSAGES_CONTENT TEXT NOT NULL,
+                $COLUMN_MESSAGES_AUTHOR TEXT NOT NULL,
+                $COLUMN_TIMESTAMP INTEGER NOT NULL,
+                $COLUMN_MESSAGES_PROMPT TEXT,
+                $COLUMN_MESSAGES_MODEL_NAME TEXT
+            )
+        """.trimIndent()
+
         db.execSQL(createFramesTable)
         db.execSQL(createVideoChunksTable)
         db.execSQL(createOcrResultsTable)
         db.execSQL(createAppsTable)
         db.execSQL(createLocationsTable)
+        db.execSQL(createMessagesTable)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -695,5 +715,60 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         }
         cursor.close()
         return locations
+    }
+
+    fun insertMessage(author: String, content: String, prompt: String? = null, modelName: String? = null): Long {
+        val db = this.writableDatabase
+        val currentTimestamp = System.currentTimeMillis()
+
+        val values = ContentValues().apply {
+            put(COLUMN_MESSAGES_AUTHOR, author)
+            put(COLUMN_MESSAGES_CONTENT, content)
+            put(COLUMN_TIMESTAMP, currentTimestamp)
+            put(COLUMN_MESSAGES_PROMPT, prompt)
+            put(COLUMN_MESSAGES_MODEL_NAME, modelName)
+        }
+
+        val result = db.insert(TABLE_MESSAGES, null, values)
+
+        if (result == -1L) {
+            Log.e("DB", "Failed to insert message: $content")
+        } else {
+            Log.d("DB", "Message inserted successfully with id: $result")
+        }
+        return result
+    }
+
+    fun getLastMessages(limit: Int): List<Message> {
+        val db = this.readableDatabase
+        val messages = mutableListOf<Message>()
+
+        val query = """
+            SELECT $COLUMN_MESSAGES_AUTHOR, $COLUMN_MESSAGES_CONTENT, $COLUMN_MESSAGES_PROMPT
+            FROM $TABLE_MESSAGES
+            ORDER BY $COLUMN_MESSAGES_ID ASC
+            LIMIT ?
+        """.trimIndent()
+
+        val cursor = db.rawQuery(query, arrayOf(limit.toString()))
+
+        if (cursor.moveToFirst()) {
+            do {
+                val author = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGES_AUTHOR))
+                val content = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGES_CONTENT))
+                val prompt = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGES_PROMPT))
+
+                messages.add(
+                    Message(
+                        author = author,
+                        content = content,
+                        prompt = prompt
+                    )
+                )
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        return messages
     }
 }

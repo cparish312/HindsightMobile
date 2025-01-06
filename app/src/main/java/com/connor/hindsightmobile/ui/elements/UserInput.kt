@@ -49,6 +49,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.connor.hindsightmobile.R
+import kotlinx.coroutines.launch
 
 enum class UserInputStatus {
     IDLE,
@@ -62,7 +63,7 @@ fun UserInputPreview() {
     UserInput(onMessageSent = {})
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun UserInput(
     modifier: Modifier = Modifier,
