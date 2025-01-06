@@ -20,6 +20,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.connor.hindsightmobile.App
+import com.connor.hindsightmobile.DB
 import com.connor.hindsightmobile.R
 import com.connor.hindsightmobile.models.ModelInfo
 import com.connor.hindsightmobile.models.ModelInfoProvider
@@ -42,6 +43,8 @@ import kotlin.math.round
 
 class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
 
+    private val dbHelper: DB = DB.getInstance(app)
+
     private val llamaCpp: LlamaCpp? = (app as? App)?.llamaCpp
     private var llamaModel: LlamaModel? = null
     private var llamaSession: LlamaGenerationSession? = null
@@ -63,9 +66,7 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
     val models: LiveData<List<ModelInfo>> = _models
     val ingestionRunning: MutableStateFlow<Boolean> = _ingestionRunning
 
-    val uiState = ConversationUiState(
-        initialMessages = emptyList()
-    )
+    val uiState: ConversationUiState
 
     private val downloadReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -115,6 +116,11 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
             ingestionRunning.value = isRunning
             Log.d("ConversationViewModel", "ingestionRunning value:  $ingestionRunning.value")
         }
+
+        val initialMessages = dbHelper.getLastMessages(6)
+        uiState = ConversationUiState(
+            initialMessages = initialMessages
+        )
 
         val defaultModelName = Preferences.prefs.getString(Preferences.defaultllmname, null)
         if (defaultModelName != null) {
@@ -199,13 +205,12 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
         }
     }
 
-
-
     @MainThread
     fun addMessage(message: Message) {
         Log.d("ConversationViewModel", "addMessage called")
         _isGenerating.postValue(true)
         uiState.addMessage(message)
+        dbHelper.insertMessage("User", message.content)
         uiState.addMessage(
             Message(
                 app.getString(R.string.assistant_name),
@@ -239,23 +244,26 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
                 Log.d("ConversationViewModel", "generatingJob launched")
                 val llamaSession = llamaSession ?: return@launch
                 llamaSession.addMessage(messageWithContext)
+                var responseString = ""
 
                 val callback = object: LlamaGenerationCallback {
                     var responseByteArray = ByteArray(0)
                     override fun newTokens(newTokens: ByteArray) {
                         responseByteArray += newTokens
-                        var string = String(responseByteArray, Charsets.UTF_8)
+                        responseString = String(responseByteArray, Charsets.UTF_8)
                         for (suffix in antiPrompt ?: emptyArray()) {
-                            string = string.removeSuffix(suffix)
-                            string = string.removeSuffix(suffix + "\n")
+                            responseString = responseString.removeSuffix(suffix)
+                            responseString = responseString.removeSuffix(suffix + "\n")
                         }
-                        uiState.updateLastMessage(string)
+                        uiState.updateLastMessage(responseString)
                     }
                 }
                 while (this.isActive && llamaSession.generate(callback) == 0) {
                     // wait for the response
                 }
                 llamaSession.printReport()
+                dbHelper.insertMessage(app.getString(R.string.assistant_name), responseString,
+                    messageWithContext, _loadedModel.value?.name)
                 _isGenerating.postValue(false)
             }
         }
@@ -291,7 +299,6 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
                     }
                 }
             }
-            uiState.resetMessages()
         }
     }
 

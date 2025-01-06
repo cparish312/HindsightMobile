@@ -192,7 +192,8 @@ fun ConversationScreen(navController: NavController, viewModel: ConversationView
                     },
                     resetScroll = {
                         scope.launch {
-                            scrollState.animateScrollToItem(scrollState.layoutInfo.totalItemsCount- 1)
+                            delay(100) // Delay needed to ensure keyboard is loaded
+                            scrollState.animateScrollToItem(scrollState.layoutInfo.totalItemsCount - 1)
                         }
                     }
                 )
