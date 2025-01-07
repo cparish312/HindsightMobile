@@ -93,7 +93,7 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
             )
         } else {
             getApplication<Application>().registerReceiver(broadcastReceiver, intentFilter,
-                Context.RECEIVER_NOT_EXPORTED)
+                Context.RECEIVER_EXPORTED)
         }
     }
 

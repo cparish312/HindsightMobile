@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import com.connor.hindsightmobile.ui.elements.AppItem
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -48,7 +48,7 @@ fun ManageRecordingsScreen(
                         modifier = Modifier.padding(start = 2.dp).padding(end = 2.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
