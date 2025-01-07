@@ -18,7 +18,8 @@ object NotificationHelper {
 
         listOf(
             RECORDING_NOTIFICATION_CHANNEL to R.string.active_recording,
-            INGESTING_NOTIFICATION_CHANNEL to R.string.active_ingesting
+            INGESTING_NOTIFICATION_CHANNEL to R.string.active_ingesting,
+            SERVER_UPLOAD_NOTIFICATION_CHANNEL to R.string.server_upload
         ).forEach { (channelName, stringResource) ->
             val channelCompat = NotificationChannelCompat.Builder(
                 channelName,

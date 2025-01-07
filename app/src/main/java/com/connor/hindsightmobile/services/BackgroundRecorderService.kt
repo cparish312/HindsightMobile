@@ -60,7 +60,6 @@ class BackgroundRecorderService : RecorderService() {
         false
     )
     private var screenshotApplication: String? = null
-    private var screenShotsSinceAutoIngest: Int = 0
     private var loopIterationsSinceAutoIngest: Int = 0
 
     private lateinit var dbHelper: DB
@@ -248,8 +247,8 @@ class BackgroundRecorderService : RecorderService() {
                                 )
                                 it.close()
                             }
-                            // Schedule the next capture
                             UserActivityState.userActive = false
+                            // Schedule the next capture
                             postRecorderLoop(this)
                         }
                     } catch (e: Exception) {
@@ -259,16 +258,19 @@ class BackgroundRecorderService : RecorderService() {
                     }
                 }
             }
-            // Initial delay before starting the recurring task
             handler?.postDelayed(recordRunnable!!, 2000) // Start after a delay of 2 seconds
         }
     }
 
     private fun postRecorderLoop(runnable: Runnable) {
         loopIterationsSinceAutoIngest += 1
-        if (loopIterationsSinceAutoIngest >= 1000) {
+        // Auto Ingest every 10000 iterations
+        if (loopIterationsSinceAutoIngest >= 10000 && (Preferences.prefs.getBoolean(
+                Preferences.autoingestenabled,
+                false
+            ))) {
             loopIterationsSinceAutoIngest = 0
-            // runIngest()
+            runIngest()
         }
         if (recorderState == RecorderState.ACTIVE) {
             recorderLoopStopped = false
@@ -282,17 +284,13 @@ class BackgroundRecorderService : RecorderService() {
         // Use the app's private storage directory
         val directory = getUnprocessedScreenshotsDirectory(context)
 
+        // . in package names are replaced with - for file naming
         val imageApplicationDashes = imageApplication?.replace(".", "-")
         val file = File(directory, "${imageApplicationDashes}_${System.currentTimeMillis()}.webp")
         try {
             FileOutputStream(file).use { fos ->
                 bitmap.compress(Bitmap.CompressFormat.WEBP, 100, fos)
                 Log.d("BackgroundRecorderService", "Image saved to ${file.absolutePath}")
-            }
-            screenShotsSinceAutoIngest += 1
-            if (screenShotsSinceAutoIngest >= 100) {
-                screenShotsSinceAutoIngest = 0
-                // runIngest()
             }
         } catch (e: IOException) {
             Log.e("BackgroundRecorderService", "Failed to save image", e)
@@ -316,7 +314,7 @@ class BackgroundRecorderService : RecorderService() {
 
     override fun onDestroy() {
         Log.d("BackgroundRecorderService", "Destroying Screen Recording Service")
-        // sendBroadcast(Intent(SCREEN_RECORDER_STOPPED))
+        sendBroadcast(Intent(SCREEN_RECORDER_STOPPED))
         isRunning = false
         handler?.removeCallbacks(recordRunnable!!) // Stop the recurring record capture
         imageReader?.close()
@@ -337,10 +335,6 @@ class BackgroundRecorderService : RecorderService() {
         }
     }
 
-    private fun addLocationToDatabase(latitude: Double, longitude: Double){
-        dbHelper.addLocation(latitude, longitude)
-    }
-
     private fun addLastKnownLocation() {
         try {
             val locationResult: Task<Location> = fusedLocationClient.lastLocation
@@ -352,7 +346,7 @@ class BackgroundRecorderService : RecorderService() {
                         lastKnownLongitude != lastKnownLocation.longitude) {
                         lastKnownLatitude = lastKnownLocation.latitude
                         lastKnownLongitude = lastKnownLocation.longitude
-                        addLocationToDatabase(lastKnownLatitude!!, lastKnownLongitude!!)
+                        dbHelper.addLocation(lastKnownLatitude!!, lastKnownLongitude!!)
                     }
                 } else {
                     Log.d("BackgroundRecorderService",

@@ -277,10 +277,6 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
         generatingJob = null
     }
 
-    fun getReport(): String? {
-        return llamaSession?.getReport()
-    }
-
     fun unloadModel() {
         viewModelScope.launch {
             val loadedModel = _loadedModel.value ?: return@launch
@@ -401,5 +397,4 @@ class ConversationViewModel(val app: Application) : AndroidViewModel(app) {
             else -> "Unknown error occurred"
         }
     }
-
 }

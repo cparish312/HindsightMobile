@@ -98,7 +98,6 @@ class RecorderModel : ViewModel() {
         context: Context,
         service: Class<out AccessibilityService>
     ): Boolean {
-//        val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
         val enabledServices = Settings.Secure.getString(
             context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
@@ -137,18 +136,16 @@ class RecorderModel : ViewModel() {
     fun hasScreenRecordingPermissions(context: Context): Boolean {
         val requiredPermissions = arrayListOf<String>()
 
-        // Get Accessibility access if recordwhenactive
-        if (Preferences.prefs.getBoolean(Preferences.recordwhenactive, false)) {
-            if (!isAccessibilityServiceEnabled(context, UserActivityTrackingService::class.java)) {
-                Log.d("RecorderModel", "Accessibility Service Not Enabled")
-                openAccessibilitySettings(context)
-                Preferences.prefs.edit().putBoolean(Preferences.screenrecordingenabled, false)
-                    .apply()
-                context.sendBroadcast(Intent(SCREEN_RECORDER_PERMISSION_DENIED))
-                return false
-            } else {
-                Log.d("RecorderModel", "Accessibility Service Enabled")
-            }
+        // Get Accessibility access (needed to get active app)
+        if (!isAccessibilityServiceEnabled(context, UserActivityTrackingService::class.java)) {
+            Log.d("RecorderModel", "Accessibility Service Not Enabled")
+            openAccessibilitySettings(context)
+            Preferences.prefs.edit().putBoolean(Preferences.screenrecordingenabled, false)
+                .apply()
+            context.sendBroadcast(Intent(SCREEN_RECORDER_PERMISSION_DENIED))
+            return false
+        } else {
+            Log.d("RecorderModel", "Accessibility Service Enabled")
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -164,8 +161,7 @@ class RecorderModel : ViewModel() {
                 context,
                 context.getString(R.string.no_sufficient_permissions),
                 Toast.LENGTH_SHORT
-            )
-                .show()
+            ).show()
         }
         return granted
     }

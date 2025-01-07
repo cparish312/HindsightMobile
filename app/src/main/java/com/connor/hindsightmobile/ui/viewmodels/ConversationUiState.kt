@@ -23,10 +23,6 @@ class ConversationUiState(
         val message = _messages.last()
         _messages[_messages.size - 1] = message.copy(prompt = prompt)
     }
-
-    fun resetMessages() {
-        _messages.clear()
-    }
 }
 
 @Immutable

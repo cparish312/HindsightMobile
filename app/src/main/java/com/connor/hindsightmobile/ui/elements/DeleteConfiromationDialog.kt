@@ -15,7 +15,8 @@ fun DeleteConfirmationDialog(
         onDismissRequest = { onDismiss() },
         title = { Text(text = "Delete Data for ${app.appName}?") },
         text = {
-            Text("Are you sure you want to delete all ${app.numFrames} frames and associated data from ${app.appName}? This action cannot be undone.")
+            Text("Are you sure you want to delete all ${app.numFrames} frames and associated" +
+                    " data from ${app.appName}? This action cannot be undone.")
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {

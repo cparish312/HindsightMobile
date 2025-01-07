@@ -170,6 +170,8 @@ class ServerUploadService : LifecycleService() {
 
         syncWithServer(client, syncData)
 
+        // if more than framesUploadLimit frames  it will keep syncing
+        // until there are no more frames to sync
         while (syncFrames.size == framesUploadLimit) {
             lastFrameId = syncFrames.lastOrNull()?.id
             Log.d("ServerUploadService", "Last synced Frame Id: $lastFrameId")
@@ -211,7 +213,7 @@ class ServerUploadService : LifecycleService() {
 
         return NotificationCompat.Builder(
             this,
-            NotificationHelper.RECORDING_NOTIFICATION_CHANNEL
+            NotificationHelper.SERVER_UPLOAD_NOTIFICATION_CHANNEL
         )
             .setContentTitle(notificationTitle)
             .setSmallIcon(R.drawable.ic_notification)

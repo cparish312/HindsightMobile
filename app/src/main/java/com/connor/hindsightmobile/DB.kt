@@ -26,11 +26,9 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
          private const val COLUMN_VIDEO_CHUNK_OFFSET = "video_chunk_offset"
 
          private const val TABLE_VIDEO_CHUNKS = "video_chunks"
-         private const val COLUMN_VIDEO_CHUNK_ID = "id"
          private const val COLUMN_VIDEO_CHUNK_PATH = "path"
 
          private const val TABLE_OCR_RESULTS = "ocr_results"
-         private const val COLUMN_OCR_RESULT_ID = "id"
          private const val COLUMN_OCR_RESULT_FRAME_ID = "frame_id"
          private const val COLUMN_OCR_RESULT_TEXT = "text"
          private const val COLUMN_OCR_RESULT_X = "x"
@@ -50,7 +48,6 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
          private const val COLUMN_LONGITUDE = "longitude"
 
          private const val TABLE_MESSAGES = "messages"
-         private const val COLUMN_MESSAGES_ID = "id"
          private const val COLUMN_MESSAGES_CONTENT = "content"
          private const val COLUMN_MESSAGES_AUTHOR = "author"
          private const val COLUMN_MESSAGES_PROMPT = "prompt"
@@ -72,21 +69,21 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
             $COLUMN_APPLICATION TEXT,
             $COLUMN_VIDEO_CHUNK INTEGER,
             $COLUMN_VIDEO_CHUNK_OFFSET INTEGER,
-            FOREIGN KEY($COLUMN_VIDEO_CHUNK) REFERENCES $TABLE_VIDEO_CHUNKS($COLUMN_VIDEO_CHUNK_ID),
+            FOREIGN KEY($COLUMN_VIDEO_CHUNK) REFERENCES $TABLE_VIDEO_CHUNKS($COLUMN_ID),
             UNIQUE ($COLUMN_TIMESTAMP, $COLUMN_APPLICATION) ON CONFLICT IGNORE
             )
         """.trimIndent()
 
         val createVideoChunksTable = """
             CREATE TABLE IF NOT EXISTS $TABLE_VIDEO_CHUNKS (
-                $COLUMN_VIDEO_CHUNK_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_VIDEO_CHUNK_PATH TEXT NOT NULL
             )
         """.trimIndent()
 
         val createOcrResultsTable = """
             CREATE TABLE IF NOT EXISTS $TABLE_OCR_RESULTS (
-                $COLUMN_OCR_RESULT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_OCR_RESULT_FRAME_ID INTEGER NOT NULL,
                 $COLUMN_OCR_RESULT_TEXT TEXT,
                 $COLUMN_OCR_RESULT_X INTEGER,
@@ -116,7 +113,7 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
 
         val createMessagesTable = """
             CREATE TABLE IF NOT EXISTS $TABLE_MESSAGES (
-                $COLUMN_MESSAGES_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_MESSAGES_CONTENT TEXT NOT NULL,
                 $COLUMN_MESSAGES_AUTHOR TEXT NOT NULL,
                 $COLUMN_TIMESTAMP INTEGER NOT NULL,
@@ -746,7 +743,7 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         val query = """
             SELECT $COLUMN_MESSAGES_AUTHOR, $COLUMN_MESSAGES_CONTENT, $COLUMN_MESSAGES_PROMPT
             FROM $TABLE_MESSAGES
-            ORDER BY $COLUMN_MESSAGES_ID ASC
+            ORDER BY $COLUMN_ID ASC
             LIMIT ?
         """.trimIndent()
 

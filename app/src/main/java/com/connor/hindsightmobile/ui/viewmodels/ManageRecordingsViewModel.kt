@@ -46,11 +46,6 @@ class ManageRecordingsViewModel(val app: Application): AndroidViewModel(app) {
         deleteAppData(app, getApplication(), dbHelper)
     }
 
-    // Deletes data for all selected apps
-    fun deleteAllData() {
-//        appList.clear()
-    }
-
     companion object {
         const val RECORDING_SETTTINGS_UPDATED = "com.connor.hindsightmobile.RECORDINGS_SETTTINGS_UPDATED"
     }
