@@ -1,7 +1,6 @@
 package com.connor.hindsightmobile
 
 import android.app.Application
-import android.util.Log
 import com.connor.hindsightmobile.obj.ObjectBoxStore
 import com.connor.hindsightmobile.utils.NotificationHelper
 import com.connor.hindsightmobile.utils.Preferences
@@ -21,16 +20,14 @@ class App : Application() {
         ObjectBoxStore.init(this)
         llamaCpp.init()
 
-        // Create a crash log file
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             logCrashToFile(throwable)
-            Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(thread, throwable)
+            defaultHandler?.uncaughtException(thread, throwable)
         }
     }
 
-    // Not sure why the log file doesn't seem to get created
     private fun logCrashToFile(throwable: Throwable) {
-        // Log.d("App", "Logging crash to file")
         try {
             val logFile = File(getExternalFilesDir(null), "crash_logs.txt")
             val logWriter = PrintWriter(FileOutputStream(logFile, true))
