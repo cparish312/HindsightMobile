@@ -45,6 +45,7 @@ Setup an onboarding session or just chat about the project [here](https://calend
 * `Chat`: go to chat
 * `Server Upload`: Setup and run server upload. Server setup can be found at [hindsight](https://github.com/cparish312/hindsight).
 * `Screen Recording`: Start Screen recording Background Process (May have to click stop on Notification to stop)
+* `Location Tracking`: Will passively track your location (minimal battery impact). Will need to enable location tracking for HindsightMobile in location access settings.
 * `Auto Ingest`: 
   * Runs auto ingest everytime your phone screen turns off
 * `Auto Ingest When Not Charging`:

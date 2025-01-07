@@ -128,11 +128,6 @@ class IngestScreenshotsService : LifecycleService() {
             ContextCompat.RECEIVER_EXPORTED
         )
 
-//        lifecycleScope.launch(Dispatchers.IO) {
-//            initializeResources()
-//            ingestScreenshots()
-//            onDestroy()
-//        }
         serviceScope.launch {
             initializeResources()
             ingestScreenshots(this)
@@ -145,35 +140,9 @@ class IngestScreenshotsService : LifecycleService() {
     private fun initializeResources(){
         unprocessedScreenshotsDirectory = getUnprocessedScreenshotsDirectory(this)
 
-        if (isTest) {
-            val dbFile = this.getDatabasePath("hindsight_test.db")
-//            if (dbFile.exists()) {
-//                if (dbFile.delete()) {
-//                    Log.d("IngestScreenshotsService", "Deleted existing database file: ${dbFile.path}")
-//                } else {
-//                    Log.e("IngestScreenshotsService", "Failed to delete database file: ${dbFile.path}")
-//                }
-//            }
-            dbHelper = DB.getInstance(this@IngestScreenshotsService, "hindsight_test.db")
-            videoFilesDirectory = File(getVideoFilesDirectory(this).parent, getVideoFilesDirectory(this).name + "_test")
-            if (!videoFilesDirectory.exists()) videoFilesDirectory.mkdirs()
-
-            val testDirectory = File(this.filesDir, "objectbox-test")
-//            if (testDirectory.exists()) {
-//                testDirectory.deleteRecursively()
-//                Log.d("IngestScreenshotsService", "Deleted existing ObjectBox test database")
-//            }
-            val objectBoxStore = MyObjectBox.builder()
-                .androidContext(this)
-                .directory(testDirectory)
-                .build()
-
-            framesBox = objectBoxStore!!.boxFor(ObjectBoxFrame::class.java)
-        } else{
-            dbHelper = DB.getInstance(this@IngestScreenshotsService)
-            videoFilesDirectory = getVideoFilesDirectory(this)
-            framesBox = ObjectBoxStore.store.boxFor(ObjectBoxFrame::class.java)
-        }
+        dbHelper = DB.getInstance(this@IngestScreenshotsService)
+        videoFilesDirectory = getVideoFilesDirectory(this)
+        framesBox = ObjectBoxStore.store.boxFor(ObjectBoxFrame::class.java)
     }
 
     private fun ingestScreenshotsIntoFrames(){
@@ -398,10 +367,11 @@ class IngestScreenshotsService : LifecycleService() {
             ingestScreenshotsIntoFrames()
             Log.d("IngestScreenshotsService","Running OCR")
             runAllOCR()
-            Log.d("IngestScreenshotsService","Running Embedding")
+            Log.d("IngestScreenshotsService","Running embedding")
             embedScreenshots()
             // Only run compression if the screen is off and phone is charging
             if (!RecorderService.screenOn && UserActivityState.phoneCharging) {
+                Log.d("IngestScreenshotsService", "Running compression")
                 compressScreenshotsIntoVideos(scope)
             }
 

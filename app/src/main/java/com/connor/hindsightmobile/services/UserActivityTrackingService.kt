@@ -21,7 +21,7 @@ class UserActivityTrackingService : AccessibilityService() {
     )
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        UserActivityState.userActive = true
+        UserActivityState.userActive = true // for only recording when active
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
             event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
             try {
@@ -31,7 +31,7 @@ class UserActivityTrackingService : AccessibilityService() {
                         return
                     }
 
-                    UserActivityState.currentApplication = packageName
+                    UserActivityState.currentApplication = packageName // For storing screenshots by application
                     Log.d("UserActivityTrackingService", "onAccessibilityEvent: $packageName")
 
                     if (packageName !in appPackages) {
@@ -56,6 +56,7 @@ class UserActivityTrackingService : AccessibilityService() {
     override fun onInterrupt() {
     }
 
+    // Doesn't work for the majority of apps due to permissions issues
     private fun getAppNameFromPackageName(packageName: String): String? {
         return try {
             val packageManager = applicationContext.packageManager

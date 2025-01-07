@@ -1,9 +1,7 @@
 package com.connor.hindsightmobile.ui.screens
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -15,12 +13,10 @@ import androidx.compose.ui.Modifier
 import com.connor.hindsightmobile.ui.elements.AppItem
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.connor.hindsightmobile.ui.viewmodels.ManageRecordingsViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,7 +48,7 @@ fun ManageRecordingsScreen(
                         modifier = Modifier.padding(start = 2.dp).padding(end = 2.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }

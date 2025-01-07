@@ -12,8 +12,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
 
 object RetrofitClient {
-    private var apiKey: String = Preferences.prefs.getString(Preferences.apikey, "").toString()
-    fun getInstance(baseUrl: String, connectTimeout: Long = 30, numTries: Int = 1): Retrofit
+    private var apiKey: String = Preferences.prefs.getString(Preferences.apikey, "")
+        .toString()
+    fun getInstance(baseUrl: String, connectTimeout: Long = 10, numTries: Int = 1): Retrofit
     {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BASIC
@@ -22,7 +23,7 @@ object RetrofitClient {
         val client = OkHttpClient.Builder()
             .connectTimeout(connectTimeout, TimeUnit.SECONDS) // Set the connection timeout
             .readTimeout(30, TimeUnit.SECONDS) // Set the read timeout
-            .writeTimeout(30, TimeUnit.SECONDS) // Set the write timeout
+            .writeTimeout(60, TimeUnit.SECONDS) // Set the write timeout
             .addInterceptor(logging)
             .addInterceptor { chain ->
                 val originalRequest = chain.request()

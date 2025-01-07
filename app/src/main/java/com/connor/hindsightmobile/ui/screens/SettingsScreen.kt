@@ -33,7 +33,6 @@ import androidx.navigation.NavController
 import com.connor.hindsightmobile.MainActivity
 import com.connor.hindsightmobile.ui.elements.DeleteRecentConfirmationDialog
 import com.connor.hindsightmobile.ui.viewmodels.SettingsViewModel
-import com.connor.hindsightmobile.utils.getAppDiskUsage
 import com.connor.hindsightmobile.utils.observeLastIngestTime
 import com.connor.hindsightmobile.utils.observeNumFrames
 import dev.jeziellago.compose.markdowntext.MarkdownText
@@ -330,7 +329,7 @@ fun SettingsScreen(navController: NavController,
                 MarkdownText(
                     markdown = """
                     ### Auto Ingest
-                    * Automatically runs ingestion every 30 minutes or 100 new screenshots
+                    * Automatically runs ingestion every time your phone screen turns off
                 """.trimIndent(),
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onSurface,

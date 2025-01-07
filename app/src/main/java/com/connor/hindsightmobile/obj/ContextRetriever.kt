@@ -54,10 +54,11 @@ class ContextRetriever(context : Context){
                 }
             }
 
+            // Add a Time Decay to favor newer results with close embedding scores
             val timeDecayedResults = mutableListOf<Pair<Float, ObjectBoxFrame>>()
             for ((score, frame) in filteredResults) {
                 val timeAgoInHours = (System.currentTimeMillis() - frame.timestamp) / (1000.0 * 60 * 60)
-                val timeDecayFactor = 1.0 / (1 + 0.001 * timeAgoInHours)
+                val timeDecayFactor = 1.0 / (1 + 0.0002 * timeAgoInHours)
                 val combinedDistance = score * (1 - timeDecayFactor)
                 timeDecayedResults.add(Pair(combinedDistance.toFloat(), frame))
             }
@@ -66,19 +67,6 @@ class ContextRetriever(context : Context){
             val topResultsByScore = timeDecayedResults
                 .sortedBy { it.first }
                 .take(nContexts)
-
-//            // Get surrounding context from nearby timestamps
-//            private suspend fun getContextWindow(frame: ObjectBoxFrame, windowSeconds: Int = 30): String {
-//                val surroundingFrames = framesBox
-//                    .query(ObjectBoxFrame_.timestamp
-//                        .between(frame.timestamp - windowSeconds * 1000,
-//                                frame.timestamp + windowSeconds * 1000))
-//                    .build()
-//                    .find()
-//                return surroundingFrames
-//                    .sortedBy { it.timestamp }
-//                    .joinToString("\n") { it.frameText.toString() }
-//            }
 
             // Sort the top n results by timestamp in ascending order
             val finalResults = topResultsByScore.sortedBy { it.second.timestamp }

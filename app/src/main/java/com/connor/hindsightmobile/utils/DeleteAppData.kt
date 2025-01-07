@@ -46,7 +46,6 @@ fun deleteAppData(app: AppInfo, context: Context, dbHelper: DB) {
     framesBox.remove(objectsToDelete)
 
     query.close()
-
 }
 
 fun deleteRecentScreenshotsData(millisecondsToDelete: Long, context: Context, dbHelper: DB) {
