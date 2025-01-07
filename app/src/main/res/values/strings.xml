@@ -32,5 +32,5 @@ Here is the user\'s query: $QUERY
     <string name="accessibility_service_description">Accessibility service is for checking which app is in use and if the user is active. Knowing the app in usage is important for allowing the user to choose which apps are recorded.</string>
     <string name="assistant_name">J-ME</string>
     <string name="active_ingesting">Active ingesting\n</string>
-    <string name="server_upload">Server Uploading</string>
+    <string name="server_uploading">Server Uploading</string>
 </resources>
