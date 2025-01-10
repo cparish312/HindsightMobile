@@ -690,9 +690,12 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
             put(COLUMN_LONGITUDE, longitude)
             put(COLUMN_TIMESTAMP, currentTimestamp)
         }
-        db.insert(TABLE_LOCATIONS, null, values)
-        Log.d("DB", "Location added: $latitude, $longitude")
-        db.close()
+        try {
+            db.insert(TABLE_LOCATIONS, null, values)
+            Log.d("DB", "Location added: $latitude, $longitude")
+        } catch (e: Exception) {
+            Log.e("DB", "Error adding location", e)
+        }
     }
 
     fun getLocations(afterTimestamp: Long? = 0): List<Location> {
