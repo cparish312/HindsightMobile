@@ -145,13 +145,13 @@ class BackgroundRecorderService : RecorderService() {
             )
         } catch (e: Exception) {
             Log.e("Media Projection Error", e.toString())
-            onDestroy()
+            selfDestroy()
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             mediaProjection!!.registerCallback(
                 object : MediaProjection.Callback() {
                     override fun onStop() {
-                        onDestroy()
+                        selfDestroy()
                     }
                 },
                 null
@@ -182,14 +182,14 @@ class BackgroundRecorderService : RecorderService() {
                         override fun onStopped() {
                             super.onStopped()
                             // Handle the virtual display being stopped
-                            onDestroy()
+                            selfDestroy()
                         }
                     },
                     null
                 )
             } catch (e: SecurityException) {
                 Log.e("BackgroundRecorderService", "Failed to create VirtualDisplay", e)
-                onDestroy()
+                selfDestroy()
             }
 
 
@@ -312,9 +312,14 @@ class BackgroundRecorderService : RecorderService() {
         )
     }
 
+    private fun selfDestroy(){
+        // When stopping service from within ensure Broadcast is sent
+        sendBroadcast(Intent(SCREEN_RECORDER_STOPPED))
+        onDestroy()
+    }
+
     override fun onDestroy() {
         Log.d("BackgroundRecorderService", "Destroying Screen Recording Service")
-        sendBroadcast(Intent(SCREEN_RECORDER_STOPPED))
         isRunning = false
         handler?.removeCallbacks(recordRunnable!!) // Stop the recurring record capture
         imageReader?.close()
