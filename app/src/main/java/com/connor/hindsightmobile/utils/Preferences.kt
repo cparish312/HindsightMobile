@@ -35,7 +35,7 @@ object Preferences {
         }
 
         if (!prefs.contains(autoingestwhennotcharging)) {
-            prefs.edit().putBoolean(autoingestwhennotcharging, true).apply()
+            prefs.edit().putBoolean(autoingestwhennotcharging, false).apply()
         }
 
         if (!prefs.contains(defaultrecordapps)) {
