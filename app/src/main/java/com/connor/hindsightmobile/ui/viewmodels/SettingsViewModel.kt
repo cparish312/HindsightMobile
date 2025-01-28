@@ -14,6 +14,7 @@ import com.connor.hindsightmobile.models.RecorderModel
 import com.connor.hindsightmobile.services.BackgroundRecorderService
 import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.services.ServerUploadService
+import com.connor.hindsightmobile.services.UserActivityTrackingService
 import com.connor.hindsightmobile.utils.Preferences
 import com.connor.hindsightmobile.utils.deleteRecentScreenshotsData
 import kotlinx.coroutines.channels.Channel
@@ -60,8 +61,8 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                BackgroundRecorderService.SCREEN_RECORDER_STOPPED -> {
-                    Log.d("MainViewModel", "SCREEN_RECORDER_STOPPED")
+                UserActivityTrackingService.ACCESSIBILITY_SERVICE_STOPPED -> {
+                    Log.d("SettingsViewModel", "ACCESSIBILITY_SERVICE_STOPPE")
                     _screenRecordingEnabled.value = false
                     Preferences.prefs.edit().putBoolean(
                         Preferences.screenrecordingenabled,
@@ -69,12 +70,26 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
                     ).apply()
                 }
                 RecorderModel.SCREEN_RECORDER_PERMISSION_DENIED -> {
-                    Log.d("MainViewModel", RecorderModel.SCREEN_RECORDER_PERMISSION_DENIED)
+                    Log.d("SettingsViewModel", RecorderModel.SCREEN_RECORDER_PERMISSION_DENIED)
                     _screenRecordingEnabled.value = false
                     Preferences.prefs.edit().putBoolean(
                         Preferences.screenrecordingenabled,
                         _screenRecordingEnabled.value
                     ).apply()
+                }
+                BackgroundRecorderService.BACKGROUND_RECORDER_STOPPED -> {
+                    Log.d("SettingsViewModel", "Background Recorder Stopped")
+                    _locationTrackingEnabled.value = false
+                    Preferences.prefs.edit().putBoolean(
+                        Preferences.locationtrackingenabled,
+                        _locationTrackingEnabled.value)
+                }
+                RecorderModel.BACKGROUND_RECORDER_PERMISSION_DENIED -> {
+                    Log.d("SettingsViewModel", RecorderModel.BACKGROUND_RECORDER_PERMISSION_DENIED)
+                    _locationTrackingEnabled.value = false
+                    Preferences.prefs.edit().putBoolean(
+                        Preferences.locationtrackingenabled,
+                        _locationTrackingEnabled.value)
                 }
             }
         }
@@ -82,8 +97,10 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
 
     init {
         val intentFilter = IntentFilter().apply {
-            addAction(BackgroundRecorderService.SCREEN_RECORDER_STOPPED)
+            addAction(UserActivityTrackingService.ACCESSIBILITY_SERVICE_STOPPED)
             addAction(RecorderModel.SCREEN_RECORDER_PERMISSION_DENIED)
+            addAction(RecorderModel.BACKGROUND_RECORDER_PERMISSION_DENIED)
+            addAction(BackgroundRecorderService.BACKGROUND_RECORDER_STOPPED)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             getApplication<Application>().registerReceiver(
@@ -115,6 +132,14 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
         _locationTrackingEnabled.value = !_locationTrackingEnabled.value
         Preferences.prefs.edit().putBoolean(Preferences.locationtrackingenabled, _locationTrackingEnabled.value)
             .apply()
+
+        viewModelScope.launch {
+            if (_locationTrackingEnabled.value) {
+                _eventChannel.send(UIEvent.StartBackgroundRecorder)
+            } else {
+                _eventChannel.send(UIEvent.StopBackgroundRecorder)
+            }
+        }
     }
 
     fun toggleDefaultRecordApps() {
@@ -145,5 +170,7 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
     sealed class UIEvent {
         object RequestScreenCapturePermission : UIEvent()
         object StopScreenRecording : UIEvent()
+        object StartBackgroundRecorder : UIEvent()
+        object StopBackgroundRecorder : UIEvent()
     }
 }

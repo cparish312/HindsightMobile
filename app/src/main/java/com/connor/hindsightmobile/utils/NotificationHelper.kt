@@ -9,9 +9,11 @@ object NotificationHelper {
     const val RECORDING_NOTIFICATION_CHANNEL = "active_recording"
     const val INGESTING_NOTIFICATION_CHANNEL = "active_ingesting"
     const val SERVER_UPLOAD_NOTIFICATION_CHANNEL = "server_upload"
+    const val SCREEN_RECORDING_NOTIFICATION_CHANNEL = "active_screen_recording"
     const val RECORDING_NOTIFICATION_ID = 1
     const val INGEST_SCREENSHOTS_NOTIFICATION_ID = 2
     const val SERVER_UPLOAD_NOTIFICATION_ID = 3
+    const val SCREEN_RECORDING_NOTIFICATION_ID = 4
 
     fun buildNotificationChannels(context: Context) {
         val notificationManager = NotificationManagerCompat.from(context)
@@ -19,7 +21,8 @@ object NotificationHelper {
         listOf(
             RECORDING_NOTIFICATION_CHANNEL to R.string.active_recording,
             INGESTING_NOTIFICATION_CHANNEL to R.string.active_ingesting,
-            SERVER_UPLOAD_NOTIFICATION_CHANNEL to R.string.server_uploading
+            SERVER_UPLOAD_NOTIFICATION_CHANNEL to R.string.server_uploading,
+            SCREEN_RECORDING_NOTIFICATION_CHANNEL to R.string.active_screen_recording
         ).forEach { (channelName, stringResource) ->
             val channelCompat = NotificationChannelCompat.Builder(
                 channelName,

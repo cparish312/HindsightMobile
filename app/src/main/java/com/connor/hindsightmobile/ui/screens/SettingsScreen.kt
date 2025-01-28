@@ -1,6 +1,5 @@
 package com.connor.hindsightmobile.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,13 +55,22 @@ fun SettingsScreen(navController: NavController,
             when (event) {
                 SettingsViewModel.UIEvent.RequestScreenCapturePermission -> {
                     if (context is MainActivity) {
-                        context.requestScreenCapturePermission()
+                        context.startScreenRecording()
                     }
                 }
                 SettingsViewModel.UIEvent.StopScreenRecording -> {
                     if (context is MainActivity) {
-                        Log.d("MainScreen", "Stopping screen recording")
                         context.stopScreenRecording()
+                    }
+                }
+                SettingsViewModel.UIEvent.StartBackgroundRecorder -> {
+                    if (context is MainActivity) {
+                        context.startBackgroundRecorder()
+                    }
+                }
+                SettingsViewModel.UIEvent.StopBackgroundRecorder -> {
+                    if (context is MainActivity) {
+                        context.stopBackgroundRecorder()
                     }
                 }
             }
