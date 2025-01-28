@@ -193,6 +193,7 @@ class UserActivityTrackingService : AccessibilityService() {
         val currentTimestamp = System.currentTimeMillis()
         val file = File(directory, "${imageApplicationDashes}_${currentTimestamp}.webp")
         lastScreenshotTimestamp = currentTimestamp
+        UserActivityState.updateLastScreenshotTimestamp(currentTimestamp)
 
         val portraitBitmap = if (bitmap.width > bitmap.height) {
             val matrix = Matrix().apply {

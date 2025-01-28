@@ -30,8 +30,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.connor.hindsightmobile.MainActivity
+import com.connor.hindsightmobile.obj.UserActivityState
 import com.connor.hindsightmobile.ui.elements.DeleteRecentConfirmationDialog
 import com.connor.hindsightmobile.ui.viewmodels.SettingsViewModel
+import com.connor.hindsightmobile.utils.convertToLocalTime
 import com.connor.hindsightmobile.utils.observeLastIngestTime
 import com.connor.hindsightmobile.utils.observeNumFrames
 import dev.jeziellago.compose.markdowntext.MarkdownText
@@ -46,9 +48,16 @@ fun SettingsScreen(navController: NavController,
     val numFrames = observeNumFrames(context).collectAsState(initial = 0)
     val lastIngestTime = observeLastIngestTime().collectAsState(initial = "")
 
+    val lastScreenshotTimestamp by UserActivityState.lastScreenshotTimestamp.collectAsState()
+    val lastScreenshotTime = convertToLocalTime(lastScreenshotTimestamp)
+
+    val lastLocationTimestamp by UserActivityState.lastLocationTimestamp.collectAsState()
+    val lastLocationTime = convertToLocalTime(lastLocationTimestamp)
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var millisecondsToDelete by remember { mutableStateOf<Long>(0) }
     var timeToDeleteString by remember { mutableStateOf<String?>(null) }
+
 
     LaunchedEffect(key1 = settingsViewModel) {
         settingsViewModel.events.collect { event ->
@@ -99,6 +108,8 @@ fun SettingsScreen(navController: NavController,
                 MarkdownText(
                     markdown = """
                         | ## Stats
+                        | ### Last Screenshot: $lastScreenshotTime
+                        | ### Last Location: $lastLocationTime
                         | ### Total Ingested Frames: ${numFrames.value}
                         | ### Last Ingest: ${lastIngestTime.value}
                         | ### [Disk Usage](diskUsage)
