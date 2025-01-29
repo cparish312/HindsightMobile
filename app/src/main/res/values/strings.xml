@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">HindsightMobile</string>
     <string name="active_recording">Active recording</string>
+    <string name="active_screen_recording">Active screen recording</string>
     <string name="recording_finished">Recording finished</string>
     <string name="stop">Stop</string>
     <string name="prompt_1">
@@ -27,6 +28,7 @@ Here is the user\'s query: $QUERY
     <string name="resume">Resume</string>
     <string name="delete">Delete</string>
     <string name="hindsight_recording">Hindsight Recording</string>
+    <string name="hindsight_screen_recording">Hindsight Screen Recording</string>
     <string name="record_screen">Record screen</string>
     <string name="cant_access_selected_folder">Can\'t access selected folder!</string>
     <string name="accessibility_service_description">Accessibility service is for checking which app is in use and if the user is active. Knowing the app in usage is important for allowing the user to choose which apps are recorded.</string>

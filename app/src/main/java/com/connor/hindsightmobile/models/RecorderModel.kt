@@ -13,24 +13,15 @@ import android.provider.Settings
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import com.connor.hindsightmobile.R
-import com.connor.hindsightmobile.enums.RecorderState
 import com.connor.hindsightmobile.services.BackgroundRecorderService
 import com.connor.hindsightmobile.services.RecorderService
 import com.connor.hindsightmobile.services.UserActivityTrackingService
 import com.connor.hindsightmobile.utils.PermissionHelper
-import com.connor.hindsightmobile.utils.Preferences
 
 class RecorderModel : ViewModel() {
-    var recorderState by mutableStateOf(RecorderState.IDLE)
-    var recordedTime by mutableStateOf<Long?>(null)
-    private var activityResult: ActivityResult? = null
 
     @SuppressLint("StaticFieldLeak")
     private var recorderService: RecorderService? = null
@@ -38,10 +29,6 @@ class RecorderModel : ViewModel() {
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             recorderService = (service as RecorderService.LocalBinder).getService()
-            recorderService?.onRecorderStateChanged = {
-                recorderState = it
-            }
-            (recorderService as? BackgroundRecorderService)?.prepare(activityResult!!)
             recorderService?.start()
         }
 
@@ -50,33 +37,11 @@ class RecorderModel : ViewModel() {
         }
     }
 
-    fun startVideoRecorder(context: Context, result: ActivityResult) {
-        activityResult = result
-        val serviceIntent = Intent(context, BackgroundRecorderService::class.java)
-        startRecorderService(context, serviceIntent)
-    }
+    fun startScreenRecorderService(context: Context) {
+        stopRecording(context)
 
-    private fun startRecorderService(context: Context, intent: Intent) {
-        runCatching {
-            context.unbindService(connection)
-        }
-
-        listOfNotNull(
-            BackgroundRecorderService::class.java,
-            UserActivityTrackingService::class.java
-        ).forEach {
-            runCatching {
-                context.stopService(Intent(context, it))
-            }
-        }
-        ContextCompat.startForegroundService(context, intent)
-        context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-
-        // Initialize KeyTracking to see when user active
-        if (Preferences.prefs.getBoolean(Preferences.recordwhenactive, true)) {
-            val keyTrackingIntent = Intent(context, UserActivityTrackingService::class.java)
-            context.startService(keyTrackingIntent)
-        }
+        val keyTrackingIntent = Intent(context, UserActivityTrackingService::class.java)
+        context.startService(keyTrackingIntent)
 
         Log.d("RecorderModel", "Start Recorder Service")
     }
@@ -85,13 +50,33 @@ class RecorderModel : ViewModel() {
         // Doesn't work if app is reopened through notification
         Log.d("RecorderModel", "Stop Recorder Service")
         listOfNotNull(
-            BackgroundRecorderService::class.java,
             UserActivityTrackingService::class.java
         ).forEach {
             context.stopService(Intent(context, it))
         }
-        recorderService?.onDestroy()
-        recordedTime = null
+    }
+
+    fun startBackgroundRecorderService(context: Context) {
+        runCatching {
+            context.unbindService(connection)
+        }
+
+        stopBackgroundRecorderService(context)
+
+        val backgroundRecordIntent = Intent(context, BackgroundRecorderService::class.java)
+        ContextCompat.startForegroundService(context, backgroundRecordIntent)
+
+        context.bindService(backgroundRecordIntent, connection, Context.BIND_AUTO_CREATE)
+    }
+
+    fun stopBackgroundRecorderService(context: Context) {
+        listOfNotNull(
+            BackgroundRecorderService::class.java
+        ).forEach {
+            runCatching {
+                context.stopService(Intent(context, it))
+            }
+        }
     }
 
     fun isAccessibilityServiceEnabled(
@@ -133,16 +118,13 @@ class RecorderModel : ViewModel() {
     }
 
     @SuppressLint("NewApi")
-    fun hasScreenRecordingPermissions(context: Context): Boolean {
+    fun hasAccessibilityPermissions(context: Context): Boolean {
         val requiredPermissions = arrayListOf<String>()
 
         // Get Accessibility access (needed to get active app)
         if (!isAccessibilityServiceEnabled(context, UserActivityTrackingService::class.java)) {
             Log.d("RecorderModel", "Accessibility Service Not Enabled")
             openAccessibilitySettings(context)
-            Preferences.prefs.edit().putBoolean(Preferences.screenrecordingenabled, false)
-                .apply()
-            context.sendBroadcast(Intent(SCREEN_RECORDER_PERMISSION_DENIED))
             return false
         } else {
             Log.d("RecorderModel", "Accessibility Service Enabled")
@@ -156,7 +138,6 @@ class RecorderModel : ViewModel() {
 
         val granted = PermissionHelper.checkPermissions(context, requiredPermissions.toTypedArray())
         if (!granted) {
-            context.sendBroadcast(Intent(SCREEN_RECORDER_PERMISSION_DENIED))
             Toast.makeText(
                 context,
                 context.getString(R.string.no_sufficient_permissions),
@@ -169,5 +150,7 @@ class RecorderModel : ViewModel() {
     companion object {
         const val SCREEN_RECORDER_PERMISSION_DENIED =
             "com.connor.hindsightmobile.SCREEN_RECORDER_PERMISSION_DENIED"
+        const val BACKGROUND_RECORDER_PERMISSION_DENIED =
+            "com.connor.hindsightmobile.LOCATION_TRACKING_PERMISSION_DENIED"
     }
 }

@@ -353,7 +353,7 @@ class IngestScreenshotsService : LifecycleService() {
                 val applicationDashes = application?.replace(".", "-")
                 val videoFile = File(videoFilesDirectory, "${applicationDashes}_$date.mp4")
                 // Stop Running compression if the screen is on
-                if (!RecorderService.screenOn) {
+                if (!UserActivityState.screenOn) {
                     createVideoFromScreenshots(scope, sortedScreenshots, videoFile)
                 }
             }
@@ -370,10 +370,11 @@ class IngestScreenshotsService : LifecycleService() {
             Log.d("IngestScreenshotsService","Running embedding")
             embedScreenshots()
             // Only run compression if the screen is off and phone is charging
-            if (!RecorderService.screenOn && UserActivityState.phoneCharging) {
+            if (!UserActivityState.screenOn && UserActivityState.phoneCharging) {
                 Log.d("IngestScreenshotsService", "Running compression")
                 compressScreenshotsIntoVideos(scope)
             }
+            Log.d("IngestScreenshotsService", "Running compression")
 
             val currentTimestamp = System.currentTimeMillis()
             Preferences.prefs.edit().putLong(Preferences.lastingesttimestamp, currentTimestamp)

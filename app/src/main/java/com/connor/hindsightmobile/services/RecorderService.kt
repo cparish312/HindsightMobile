@@ -24,7 +24,6 @@ import com.connor.hindsightmobile.MainActivity
 import com.connor.hindsightmobile.R
 import com.connor.hindsightmobile.enums.RecorderState
 import com.connor.hindsightmobile.obj.UserActivityState
-import com.connor.hindsightmobile.utils.NotificationHelper
 import com.connor.hindsightmobile.utils.PermissionHelper
 import com.connor.hindsightmobile.utils.Preferences
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +32,10 @@ import kotlinx.coroutines.withContext
 
 abstract class RecorderService : LifecycleService() {
     abstract val notificationTitle: String
+    abstract val noticationChannel: String
+    abstract val recordingNoticationID: Int
+    abstract val recorderIntentActionKey: String
+
 
     private val binder = LocalBinder()
     var recorder: MediaRecorder? = null
@@ -56,11 +59,11 @@ abstract class RecorderService : LifecycleService() {
             }
             when (intent?.action) {
                 Intent.ACTION_SCREEN_OFF -> {
-                    screenOn = false
+                    UserActivityState.screenOn = false
                     runIngest()
                 }
                 Intent.ACTION_SCREEN_ON -> {
-                    screenOn = true
+                    UserActivityState.screenOn = true
                 }
             }
         }
@@ -80,19 +83,19 @@ abstract class RecorderService : LifecycleService() {
         val notification = buildNotification()
         if (fgServiceType != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
-                NotificationHelper.RECORDING_NOTIFICATION_ID,
+                recordingNoticationID,
                 notification.build(),
                 fgServiceType!!
             )
         } else {
-            startForeground(NotificationHelper.RECORDING_NOTIFICATION_ID, notification.build())
+            startForeground(recordingNoticationID, notification.build())
         }
 
         runCatching {
             unregisterReceiver(recorderReceiver)
         }
         val intentFilter = IntentFilter().apply {
-            addAction(RECORDER_INTENT_ACTION)
+            addAction(recorderIntentActionKey)
             addAction(Intent.ACTION_SCREEN_OFF)
             addAction(Intent.ACTION_SCREEN_ON)
         }
@@ -107,7 +110,7 @@ abstract class RecorderService : LifecycleService() {
     }
 
     private fun buildNotification(): NotificationCompat.Builder {
-        val stopIntent = Intent(RECORDER_INTENT_ACTION).putExtra(ACTION_EXTRA_KEY, STOP_ACTION)
+        val stopIntent = Intent(recorderIntentActionKey).putExtra(ACTION_EXTRA_KEY, STOP_ACTION)
             .putExtra(
                 FROM_RECORDER_SERVICE,
                 true
@@ -118,7 +121,7 @@ abstract class RecorderService : LifecycleService() {
             getPendingIntent(stopIntent, 2)
         )
 
-        val resumeOrPauseIntent = Intent(RECORDER_INTENT_ACTION).putExtra(
+        val resumeOrPauseIntent = Intent(recorderIntentActionKey).putExtra(
             ACTION_EXTRA_KEY,
             PAUSE_RESUME_ACTION
         ).putExtra(
@@ -137,7 +140,7 @@ abstract class RecorderService : LifecycleService() {
 
         return NotificationCompat.Builder(
             this,
-            NotificationHelper.RECORDING_NOTIFICATION_CHANNEL
+            noticationChannel
         )
             .setContentTitle(notificationTitle)
             .setSmallIcon(R.drawable.ic_stat_hourglass_empty)
@@ -163,7 +166,7 @@ abstract class RecorderService : LifecycleService() {
         }
         val notification = buildNotification().build()
         NotificationManagerCompat.from(this).notify(
-            NotificationHelper.RECORDING_NOTIFICATION_ID,
+            recordingNoticationID,
             notification
         )
     }
@@ -213,7 +216,7 @@ abstract class RecorderService : LifecycleService() {
         }
 
         NotificationManagerCompat.from(this)
-            .cancel(NotificationHelper.RECORDING_NOTIFICATION_ID)
+            .cancel(recordingNoticationID)
 
         lifecycleScope.launch {
             withContext(Dispatchers.IO) {
@@ -251,7 +254,7 @@ abstract class RecorderService : LifecycleService() {
             return
         }
         // Only autoingest if screen is off
-        if (screenOn) {
+        if (UserActivityState.screenOn) {
             return
         }
         if (!Preferences.prefs.getBoolean(Preferences.autoingestwhennotcharging, false)
@@ -267,11 +270,9 @@ abstract class RecorderService : LifecycleService() {
     }
 
     companion object {
-        const val RECORDER_INTENT_ACTION = "com.connor.hindsightmobile.RECORDER_ACTION"
         const val ACTION_EXTRA_KEY = "action"
         const val STOP_ACTION = "STOP"
         const val PAUSE_RESUME_ACTION = "PR"
         const val FROM_RECORDER_SERVICE = "com.connor.hindsightmobile.FROM_RECORDER_SERVICE"
-        var screenOn: Boolean = true
     }
 }

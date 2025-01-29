@@ -3,4 +3,6 @@
     android:accessibilityEventTypes="typeAllMask"
     android:accessibilityFeedbackType="feedbackSpoken"
     android:notificationTimeout="100"
-    android:accessibilityFlags="flagDefault" />
+    android:canTakeScreenshot="true"
+    android:canRetrieveWindowContent="true"
+    android:accessibilityFlags="flagReportViewIds" />

@@ -1,6 +1,5 @@
 package com.connor.hindsightmobile.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,8 +30,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.connor.hindsightmobile.MainActivity
+import com.connor.hindsightmobile.obj.UserActivityState
 import com.connor.hindsightmobile.ui.elements.DeleteRecentConfirmationDialog
 import com.connor.hindsightmobile.ui.viewmodels.SettingsViewModel
+import com.connor.hindsightmobile.utils.convertToLocalTime
 import com.connor.hindsightmobile.utils.observeLastIngestTime
 import com.connor.hindsightmobile.utils.observeNumFrames
 import dev.jeziellago.compose.markdowntext.MarkdownText
@@ -47,22 +48,38 @@ fun SettingsScreen(navController: NavController,
     val numFrames = observeNumFrames(context).collectAsState(initial = 0)
     val lastIngestTime = observeLastIngestTime().collectAsState(initial = "")
 
+    val lastScreenshotTimestamp by UserActivityState.lastScreenshotTimestamp.collectAsState()
+    val lastScreenshotTime = convertToLocalTime(lastScreenshotTimestamp)
+
+    val lastLocationTimestamp by UserActivityState.lastLocationTimestamp.collectAsState()
+    val lastLocationTime = convertToLocalTime(lastLocationTimestamp)
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var millisecondsToDelete by remember { mutableStateOf<Long>(0) }
     var timeToDeleteString by remember { mutableStateOf<String?>(null) }
+
 
     LaunchedEffect(key1 = settingsViewModel) {
         settingsViewModel.events.collect { event ->
             when (event) {
                 SettingsViewModel.UIEvent.RequestScreenCapturePermission -> {
                     if (context is MainActivity) {
-                        context.requestScreenCapturePermission()
+                        context.startScreenRecording()
                     }
                 }
                 SettingsViewModel.UIEvent.StopScreenRecording -> {
                     if (context is MainActivity) {
-                        Log.d("MainScreen", "Stopping screen recording")
                         context.stopScreenRecording()
+                    }
+                }
+                SettingsViewModel.UIEvent.StartBackgroundRecorder -> {
+                    if (context is MainActivity) {
+                        context.startBackgroundRecorder()
+                    }
+                }
+                SettingsViewModel.UIEvent.StopBackgroundRecorder -> {
+                    if (context is MainActivity) {
+                        context.stopBackgroundRecorder()
                     }
                 }
             }
@@ -91,6 +108,8 @@ fun SettingsScreen(navController: NavController,
                 MarkdownText(
                     markdown = """
                         | ## Stats
+                        | ### Last Screenshot: $lastScreenshotTime
+                        | ### Last Location: $lastLocationTime
                         | ### Total Ingested Frames: ${numFrames.value}
                         | ### Last Ingest: ${lastIngestTime.value}
                         | ### [Disk Usage](diskUsage)
