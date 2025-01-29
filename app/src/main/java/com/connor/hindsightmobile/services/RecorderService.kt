@@ -24,7 +24,6 @@ import com.connor.hindsightmobile.MainActivity
 import com.connor.hindsightmobile.R
 import com.connor.hindsightmobile.enums.RecorderState
 import com.connor.hindsightmobile.obj.UserActivityState
-import com.connor.hindsightmobile.utils.NotificationHelper
 import com.connor.hindsightmobile.utils.PermissionHelper
 import com.connor.hindsightmobile.utils.Preferences
 import kotlinx.coroutines.Dispatchers
@@ -60,11 +59,11 @@ abstract class RecorderService : LifecycleService() {
             }
             when (intent?.action) {
                 Intent.ACTION_SCREEN_OFF -> {
-                    screenOn = false
+                    UserActivityState.screenOn = false
                     runIngest()
                 }
                 Intent.ACTION_SCREEN_ON -> {
-                    screenOn = true
+                    UserActivityState.screenOn = true
                 }
             }
         }
@@ -255,7 +254,7 @@ abstract class RecorderService : LifecycleService() {
             return
         }
         // Only autoingest if screen is off
-        if (screenOn) {
+        if (UserActivityState.screenOn) {
             return
         }
         if (!Preferences.prefs.getBoolean(Preferences.autoingestwhennotcharging, false)
@@ -275,6 +274,5 @@ abstract class RecorderService : LifecycleService() {
         const val STOP_ACTION = "STOP"
         const val PAUSE_RESUME_ACTION = "PR"
         const val FROM_RECORDER_SERVICE = "com.connor.hindsightmobile.FROM_RECORDER_SERVICE"
-        var screenOn: Boolean = true
     }
 }

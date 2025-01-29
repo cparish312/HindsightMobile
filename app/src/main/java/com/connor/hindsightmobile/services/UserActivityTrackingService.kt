@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Matrix
 import android.os.BatteryManager
 import android.os.Build
@@ -22,7 +21,7 @@ import com.connor.hindsightmobile.DB
 import com.connor.hindsightmobile.obj.UserActivityState
 import com.connor.hindsightmobile.ui.viewmodels.ManageRecordingsViewModel
 import com.connor.hindsightmobile.utils.Preferences
-import com.connor.hindsightmobile.utils.getAccessibilityScreenshotsDirectory
+import com.connor.hindsightmobile.utils.getUnprocessedScreenshotsDirectory
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -71,6 +70,12 @@ class UserActivityTrackingService : AccessibilityService() {
                         Log.d("UserActivityTrackingService", "Device is not charging.")
                         UserActivityState.phoneCharging = false
                     }
+                }
+                Intent.ACTION_SCREEN_OFF -> {
+                    UserActivityState.screenOn = false
+                }
+                Intent.ACTION_SCREEN_ON -> {
+                    UserActivityState.screenOn = true
                 }
             }
         }
@@ -152,6 +157,8 @@ class UserActivityTrackingService : AccessibilityService() {
         val intentFilter = IntentFilter().apply {
             addAction(ManageRecordingsViewModel.RECORDING_SETTTINGS_UPDATED)
             addAction(Intent.ACTION_BATTERY_CHANGED)
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
         }
         ContextCompat.registerReceiver(
             this,
@@ -188,7 +195,7 @@ class UserActivityTrackingService : AccessibilityService() {
     }
 
     private fun saveImageData(bitmap: Bitmap) {
-        val directory = getAccessibilityScreenshotsDirectory(this)
+        val directory = getUnprocessedScreenshotsDirectory(this)
         val imageApplicationDashes = screenshotApplication?.replace(".", "-")
         val currentTimestamp = System.currentTimeMillis()
         val file = File(directory, "${imageApplicationDashes}_${currentTimestamp}.webp")

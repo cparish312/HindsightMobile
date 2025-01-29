@@ -14,12 +14,6 @@ fun getUnprocessedScreenshotsDirectory(context: Context): File {
     return directory
 }
 
-fun getAccessibilityScreenshotsDirectory(context: Context): File {
-    val directory = File(context.filesDir, "accessibility_screenshot_images")
-    if (!directory.exists()) directory.mkdirs() // Ensure the directory exists
-    return directory
-}
-
 fun getVideoFilesDirectory(context: Context): File {
     val directory = File(context.filesDir, "video_files")
     if (!directory.exists()) directory.mkdirs() // Ensure the directory exists

@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.StateFlow
 object UserActivityState {
     @Volatile var userActive: Boolean = false
 
+    @Volatile var screenOn: Boolean = true
+
     @Volatile var phoneCharging: Boolean = false
 
     @Volatile var currentApplication: String? = "screenshot"
