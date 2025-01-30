@@ -9,6 +9,7 @@ import com.connor.hindsightmobile.obj.OCRResult
 import com.connor.hindsightmobile.ui.elements.AppInfo
 import com.connor.hindsightmobile.interfaces.Frame
 import com.connor.hindsightmobile.interfaces.Location
+import com.connor.hindsightmobile.interfaces.VideoChunk
 import com.connor.hindsightmobile.ui.viewmodels.Message
 
 class DB private constructor(context: Context, databaseName: String = DATABASE_NAME) :
@@ -771,4 +772,54 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
         cursor.close()
         return messages
     }
+
+    fun getVideoChunks(lastVideoChunkId: Int? = -1): List<VideoChunk> {
+        val db = this.readableDatabase
+        val videoChunks = mutableListOf<VideoChunk>()
+
+        val effectiveLastVideoChunkId = lastVideoChunkId ?: -1
+
+        val query = """
+        SELECT vc.$COLUMN_ID, vc.$COLUMN_VIDEO_CHUNK_PATH, 
+               f.$COLUMN_ID AS frame_id, f.$COLUMN_TIMESTAMP, f.$COLUMN_APPLICATION
+        FROM $TABLE_VIDEO_CHUNKS vc
+        LEFT JOIN $TABLE_FRAMES f ON vc.$COLUMN_ID = f.$COLUMN_VIDEO_CHUNK
+        WHERE vc.$COLUMN_ID > ?
+        ORDER BY vc.$COLUMN_ID ASC, f.$COLUMN_VIDEO_CHUNK_OFFSET ASC
+    """.trimIndent()
+
+        val cursor = db.rawQuery(query, arrayOf(effectiveLastVideoChunkId.toString()))
+
+        val chunkMap = mutableMapOf<Int, Pair<String, MutableList<Frame>>>()
+
+        if (cursor.moveToFirst()) {
+            do {
+                val chunkId = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID))
+                val chunkPath = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_VIDEO_CHUNK_PATH))
+                val frameId = cursor.getInt(cursor.getColumnIndexOrThrow("frame_id"))
+                val timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_TIMESTAMP))
+                val application = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_APPLICATION))
+
+                val frame = Frame(
+                    id = frameId,
+                    timestamp = timestamp,
+                    application = application ?: "",
+                    ocr_results = emptyList()
+                )
+
+                val chunkEntry = chunkMap.getOrPut(chunkId) { chunkPath to mutableListOf() }
+                chunkEntry.second.add(frame)
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+
+        chunkMap.forEach { (chunkId, pair) ->
+            val (chunkPath, frames) = pair
+            videoChunks.add(VideoChunk(chunkId, chunkPath, frames))
+        }
+
+        return videoChunks
+    }
+
 }

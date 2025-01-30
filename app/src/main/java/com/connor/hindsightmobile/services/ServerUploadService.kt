@@ -27,6 +27,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 
 class ServerUploadService : LifecycleService() {
     val notificationTitle: String = "HindsightMobile Server Upload"
@@ -88,7 +93,7 @@ class ServerUploadService : LifecycleService() {
         super.onCreate()
     }
 
-    private suspend fun getLastFrameId(): Int? {
+    private suspend fun getLastId(tableName: String): Int? {
         val serverUrl: String = Preferences.prefs.getString(
             Preferences.interneturl,
             ""
@@ -97,10 +102,10 @@ class ServerUploadService : LifecycleService() {
         val client = retrofit.create(ApiService::class.java)
 
         return try {
-            val response = client.getLastFrameId(sourceName)
+            val response = client.getLastId(sourceName, tableName)
 
             if (response.isSuccessful) {
-                response.body()?.last_frame_id?.toInt()
+                response.body()?.last_id?.toInt()
             } else {
                 println("Failed to fetch the last frame id: ${response.errorBody()?.string()}")
                 null
@@ -149,9 +154,56 @@ class ServerUploadService : LifecycleService() {
         }
     }
 
+    suspend fun uploadVideoToServer(apiService: ApiService, file: File, videoChunkId: Int, frameIds: List<Int>) {
+        val requestFile = file.asRequestBody("video/mp4".toMediaTypeOrNull())
+        val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+
+        val sourcePart = sourceName.toRequestBody("text/plain".toMediaTypeOrNull())
+        val videoChunkIdPart = videoChunkId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val frameIdsPart = frameIds.joinToString(",").toRequestBody("text/plain".toMediaTypeOrNull())
+
+        val response = apiService.uploadVideo(filePart, sourcePart, videoChunkIdPart, frameIdsPart)
+
+        if (response.isSuccessful) {
+            Log.d("ServerUploadService","Video $videoChunkId uploaded successfully")
+        } else {
+            println("Failed to upload video $videoChunkId: ${response.errorBody()?.string()}")
+        }
+    }
+
+    suspend fun uploadAllVideoChunks() {
+        var lastVideoChunkId = getLastId("video_chunks")
+        Log.d("ServerUploadService", "Last synced Video Chunk Id: $lastVideoChunkId")
+
+        var syncVideoChunks = dbHelper.getVideoChunks(lastVideoChunkId)
+        Log.d("ServerUploadService", "Sync video chunks: ${syncVideoChunks.size}")
+
+        if (syncVideoChunks.isEmpty()) {
+            Log.d("ServerUploadService", "No new video chunks to upload")
+            return
+        }
+
+        val serverUrl: String = Preferences.prefs.getString(
+            Preferences.interneturl,
+            ""
+        ).toString()
+        val retrofit = RetrofitClient.getInstance(serverUrl, numTries = 3)
+        val client = retrofit.create(ApiService::class.java)
+
+        for (chunk in syncVideoChunks) {
+            val file = File(chunk.path)
+            if (!file.exists()) {
+                Log.e("Upload", "File not found: ${chunk.path}")
+                continue
+            }
+
+            uploadVideoToServer(client, file, chunk.id, chunk.frames.map { it.id })
+        }
+    }
+
     private suspend fun syncDatabase() {
 
-        var lastFrameId = getLastFrameId()
+        var lastFrameId = getLastId("frames")
         Log.d("ServerUploadService", "Last synced Frame Id: $lastFrameId")
         var syncFrames = dbHelper.getNewFramesAndOCR(lastFrameId, framesUploadLimit)
         Log.d("ServerUploadService", "Sync frames: ${syncFrames.size}")
@@ -180,6 +232,8 @@ class ServerUploadService : LifecycleService() {
             syncData = syncDBData(sourceName, syncFrames)
             syncWithServer(client, syncData)
         }
+
+        uploadAllVideoChunks()
         onDestroy()
     }
 

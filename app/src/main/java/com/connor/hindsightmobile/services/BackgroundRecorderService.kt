@@ -156,8 +156,8 @@ class BackgroundRecorderService : RecorderService() {
                         lastKnownLatitude = lastKnownLocation.latitude
                         lastKnownLongitude = lastKnownLocation.longitude
                         dbHelper.addLocation(lastKnownLatitude!!, lastKnownLongitude!!)
+                        UserActivityState.updateLastLocationTimestamp(System.currentTimeMillis())
                     }
-                    UserActivityState.updateLastLocationTimestamp(System.currentTimeMillis())
                 } else {
                     Log.d("BackgroundScreenRecorderService",
                         "No location detected. Make sure location is enabled on the device.")
