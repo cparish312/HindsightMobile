@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import com.connor.hindsightmobile.models.RecorderModel
 import com.connor.hindsightmobile.models.RecorderModel.Companion.BACKGROUND_RECORDER_PERMISSION_DENIED
 import com.connor.hindsightmobile.models.RecorderModel.Companion.SCREEN_RECORDER_PERMISSION_DENIED
+import com.connor.hindsightmobile.obj.UserActivityState
 import com.connor.hindsightmobile.services.BackgroundRecorderService
 import com.connor.hindsightmobile.services.IngestScreenshotsService
 import com.connor.hindsightmobile.services.RecorderService
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        Log.d("MainActivity", "screenrecordingenabled = ${Preferences.prefs.getBoolean(Preferences.screenrecordingenabled, false)}")
+        UserActivityState.loadLastTimestamps(this)
 
         if (Preferences.prefs.getBoolean(Preferences.screenrecordingenabled, false)) {
             if (!intent.getBooleanExtra(RecorderService.FROM_RECORDER_SERVICE, false)) {

@@ -18,6 +18,8 @@ object Preferences {
     const val apikey = "ApiKey"
     const val interneturl = "InternetUrl"
     const val sourcename = "SourceName"
+    const val lastscreenshottimestamp = "LastScreenshotTimestamp"
+    const val lastlocationtimestamp = "LastLocationTimestamp"
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE)
@@ -61,5 +63,14 @@ object Preferences {
         if (!prefs.contains(sourcename)) {
             prefs.edit().putString(sourcename, "hindsightmobile").apply()
         }
+
+        if (!prefs.contains(lastscreenshottimestamp)) {
+            prefs.edit().putLong(lastscreenshottimestamp, 0L).apply()
+        }
+
+        if (!prefs.contains(lastlocationtimestamp)) {
+            prefs.edit().putLong(lastlocationtimestamp, 0L).apply()
+        }
+
     }
 }

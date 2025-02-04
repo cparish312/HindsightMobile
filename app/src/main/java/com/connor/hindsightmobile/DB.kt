@@ -746,9 +746,12 @@ class DB private constructor(context: Context, databaseName: String = DATABASE_N
 
         val query = """
             SELECT $COLUMN_MESSAGES_AUTHOR, $COLUMN_MESSAGES_CONTENT, $COLUMN_MESSAGES_PROMPT
-            FROM $TABLE_MESSAGES
+            FROM (
+                SELECT * FROM $TABLE_MESSAGES
+                ORDER BY $COLUMN_ID DESC
+                LIMIT ?
+            )
             ORDER BY $COLUMN_ID ASC
-            LIMIT ?
         """.trimIndent()
 
         val cursor = db.rawQuery(query, arrayOf(limit.toString()))
