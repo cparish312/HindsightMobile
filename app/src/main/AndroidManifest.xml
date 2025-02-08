@@ -2,7 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="MediaStore.createWriteRequest"/>
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
@@ -72,6 +77,12 @@
             android:name="com.connor.hindsightmobile.services.ServerUploadService"
             android:exported="false"
             android:foregroundServiceType="dataSync">
+        </service>
+
+        <service
+            android:name="com.connor.hindsightmobile.services.CameraCaptureService"
+            android:exported="false"
+            android:permission="android.permission.CAMERA">
         </service>
 
     </application>
