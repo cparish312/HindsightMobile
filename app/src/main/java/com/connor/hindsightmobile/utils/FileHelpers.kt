@@ -20,6 +20,12 @@ fun getVideoFilesDirectory(context: Context): File {
     return directory
 }
 
+fun getCameraCaptureDirectory(context: Context): File {
+    val directory = File(context.filesDir, "camera_captures")
+    if (!directory.exists()) directory.mkdirs() // Ensure the directory exists
+    return directory
+}
+
 fun parseScreenshotFilePath(filePath: String): Pair<String?, Long?> {
     val fileName = filePath.substringAfterLast("/")
     val parts = fileName.removeSuffix(".webp").split("_")

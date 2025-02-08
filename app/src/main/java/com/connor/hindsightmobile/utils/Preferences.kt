@@ -10,6 +10,7 @@ object Preferences {
     const val screenrecordingenabled = "ScreenRecordingEnabled"
     const val recordwhenactive = "RecordWhenActive"
     const val autoingestenabled = "AutoIngest"
+    const val cameracaptureenabled = "CameraCaptureEnabled"
     const val autoingestwhennotcharging = "AutoIngestWhenNotCharging"
     const val defaultllmname = "DefaultLLMName"
     const val defaultrecordapps = "DefaultRecordApps"
@@ -70,6 +71,10 @@ object Preferences {
 
         if (!prefs.contains(lastlocationtimestamp)) {
             prefs.edit().putLong(lastlocationtimestamp, 0L).apply()
+        }
+
+        if (!prefs.contains(cameracaptureenabled)) {
+            prefs.edit().putBoolean(cameracaptureenabled, false).apply()
         }
 
     }

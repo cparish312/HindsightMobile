@@ -45,6 +45,8 @@ abstract class RecorderService : LifecycleService() {
     open val fgServiceType: Int? = null
     var recorderState: RecorderState = RecorderState.IDLE
 
+    private var lastCameraCaptureTimestamp: Long = 0
+
     private val recorderReceiver = object : BroadcastReceiver() {
         @SuppressLint("NewApi")
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -64,6 +66,22 @@ abstract class RecorderService : LifecycleService() {
                 }
                 Intent.ACTION_SCREEN_ON -> {
                     UserActivityState.screenOn = true
+                    val cameraCaptureEnabled: Boolean = Preferences.prefs.getBoolean(
+                        Preferences.cameracaptureenabled,
+                        false
+                    )
+
+                    val currentTimestamp = System.currentTimeMillis()
+                    if (cameraCaptureEnabled && currentTimestamp - lastCameraCaptureTimestamp > 3000){
+                        lastCameraCaptureTimestamp = currentTimestamp
+                        Log.d("RecorderService", "Starting camera service")
+                        Intent(context, CameraCaptureService::class.java).also { serviceIntent ->
+                            context?.stopService(serviceIntent)
+                        }
+                        Intent(context, CameraCaptureService::class.java).also { serviceIntent ->
+                            context?.startService(serviceIntent)
+                        }
+                    }
                 }
             }
         }

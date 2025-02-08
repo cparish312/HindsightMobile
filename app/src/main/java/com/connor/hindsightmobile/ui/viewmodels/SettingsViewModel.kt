@@ -51,6 +51,11 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
     )
     val autoIngestWhenNotCharging = _autoIngestWhenNotCharging.asStateFlow()
 
+    private val _cameraCaptureEnabled = MutableStateFlow(
+        Preferences.prefs.getBoolean(Preferences.cameracaptureenabled, false)
+    )
+    val cameraCaptureEnabled = _cameraCaptureEnabled.asStateFlow()
+
     val isIngesting = IngestScreenshotsService.isRunning.asStateFlow()
 
     val isUploading = ServerUploadService.isRunning.asStateFlow()
@@ -160,6 +165,12 @@ class SettingsViewModel(val app: Application) : AndroidViewModel(app) {
     fun toggleAutoIngestWhenNotCharging() {
         _autoIngestWhenNotCharging.value = !_autoIngestWhenNotCharging.value
         Preferences.prefs.edit().putBoolean(Preferences.autoingestwhennotcharging, _autoIngestWhenNotCharging.value)
+            .apply()
+    }
+
+    fun toggleCameraCaptureEnabled() {
+        _cameraCaptureEnabled.value = !_cameraCaptureEnabled.value
+        Preferences.prefs.edit().putBoolean(Preferences.cameracaptureenabled, _cameraCaptureEnabled.value)
             .apply()
     }
 
