@@ -149,9 +149,16 @@ class IngestScreenshotsService : LifecycleService() {
         val screenshotFiles = getImageFiles(unprocessedScreenshotsDirectory)
         val ingestedFrames = dbHelper.getAllFrameTimestampsAndApplications().toSet()
         // Filter for any screenshots that have already been added
-        val nonIngestedScreenshots = screenshotFiles.filter { file ->
+        val nonIngestedScreenshots = screenshotFiles.mapNotNull { file ->
             val (fileApplication, fileTimestamp) = parseScreenshotFilePath(file.name)
-            fileTimestamp != null && !ingestedFrames.contains(Pair(fileTimestamp, fileApplication))
+            if (fileApplication == null || fileTimestamp == null) {
+                file.delete()
+                null
+            } else if (!ingestedFrames.contains(Pair(fileTimestamp, fileApplication))) {
+                file
+            } else {
+                null
+            }
         }
         val sortedScreenshots = nonIngestedScreenshots.sortedBy { file ->
             val (_, timestamp) = parseScreenshotFilePath(file.name)
@@ -367,8 +374,8 @@ class IngestScreenshotsService : LifecycleService() {
             ingestScreenshotsIntoFrames()
             Log.d("IngestScreenshotsService","Running OCR")
             runAllOCR()
-            Log.d("IngestScreenshotsService","Running embedding")
-            embedScreenshots()
+//            Log.d("IngestScreenshotsService","Running embedding")
+//            embedScreenshots()
             // Only run compression if the screen is off and phone is charging
             if (!UserActivityState.screenOn && UserActivityState.phoneCharging) {
                 Log.d("IngestScreenshotsService", "Running compression")
