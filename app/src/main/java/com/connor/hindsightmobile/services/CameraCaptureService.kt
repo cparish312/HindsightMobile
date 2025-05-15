@@ -42,7 +42,7 @@ class CameraCaptureService : LifecycleService() {
 
     fun takePictureFromBothCameras() {
         // Initialize the camera manager and get camera characteristics
-        Thread.sleep(1000)
+        Thread.sleep(100)
         setUpImageReader("0", "backCamera")
     }
     fun setUpImageReader(cameraId: String, cameraName: String) {
@@ -96,6 +96,7 @@ class CameraCaptureService : LifecycleService() {
                     session.capture(captureRequestBuilder.build(), object : CameraCaptureSession.CaptureCallback() {
                         override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult) {
                             Log.d("CameraCaptureSession", "Focus locked! Taking photo.")
+                            cameraDevice?.close()
                         }
                     }, null)
                 }
@@ -106,7 +107,7 @@ class CameraCaptureService : LifecycleService() {
             }, null)
         } catch (e: CameraAccessException) {
             Log.e("CameraCaptureSession", "Failed to create capture session", e)
-            cameraDevice.close()
+            cameraDevice?.close()
         }
     }
 
@@ -165,10 +166,10 @@ class CameraCaptureService : LifecycleService() {
         try {
             FileOutputStream(file).use { fos ->
                 bitmap.compress(Bitmap.CompressFormat.WEBP, 100, fos)
-                Log.d("BackgroundRecorderService", "Image saved to ${file.absolutePath}")
+                Log.d("CameraCaptureService", "Image saved to ${file.absolutePath}")
             }
         } catch (e: IOException) {
-            Log.e("BackgroundRecorderService", "Failed to save image", e)
+            Log.e("CameraCaptureService", "Failed to save image", e)
         }
     }
 
