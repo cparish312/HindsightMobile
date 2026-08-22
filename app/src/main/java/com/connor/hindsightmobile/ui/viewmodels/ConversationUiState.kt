@@ -15,11 +15,13 @@ class ConversationUiState(
     }
 
     fun updateLastMessage(msg: String) {
+        if (_messages.isEmpty()) return
         val message = _messages.last()
         _messages[_messages.size - 1] = message.copy(content = msg)
     }
 
     fun addPromptToLastMessage(prompt: String) {
+        if (_messages.isEmpty()) return
         val message = _messages.last()
         _messages[_messages.size - 1] = message.copy(prompt = prompt)
     }
